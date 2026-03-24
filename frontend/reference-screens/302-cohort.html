@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hatchloom — Business Foundations · Cohort A</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --pink: #FF1F5A;
+    --teal: #0891B2;
+    --orange: #FF8C00;
+    --charcoal: #1E1E2E;
+    --text: #2D2D2D;
+    --text-soft: #6B7280;
+    --bg: #F7F8FC;
+    --card: #FFFFFF;
+    --border: #EDEEF2;
+    --green: #22C55E;
+    --amber: #F59E0B;
+    --red: #EF4444;
+    --topnav-h: 58px;
+    --sidebar-w: 215px;
+    --shadow-card: 0 2px 12px rgba(0,0,0,0.04);
+    --shadow-hover: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+html { font-size: 14px; }
+body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ========== TOPNAV ========== */
+.topnav {
+    position: sticky; top: 0; z-index: 100;
+    height: var(--topnav-h);
+    background: var(--card);
+    border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+}
+.topnav-left { display: flex; align-items: center; gap: 16px; }
+.logo {
+    font-family: 'Outfit', sans-serif; font-weight: 800;
+    font-size: 1.35rem; color: var(--charcoal);
+    letter-spacing: -0.5px; text-decoration: none;
+}
+.logo span { color: var(--pink); }
+.school-admin-pill {
+    background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+    color: #4338CA; font-size: 0.78rem; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px; letter-spacing: 0.02em;
+}
+.school-name {
+    font-family: 'Outfit', sans-serif; font-weight: 600;
+    font-size: 0.92rem; color: var(--charcoal);
+}
+.topnav-right { display: flex; align-items: center; gap: 14px; }
+.topnav-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s;
+    position: relative; color: var(--text-soft);
+}
+.topnav-icon:hover { background: var(--bg); }
+.topnav-icon svg { width: 20px; height: 20px; }
+.notif-badge {
+    position: absolute; top: 4px; right: 4px;
+    width: 8px; height: 8px;
+    background: var(--pink); border-radius: 50%; border: 2px solid var(--card);
+}
+.rep-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px; border-radius: 20px;
+    background: var(--bg); cursor: pointer; transition: background 0.15s;
+}
+.rep-chip:hover { background: var(--border); }
+.rep-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.75rem;
+}
+.rep-name { font-size: 0.85rem; font-weight: 600; color: var(--charcoal); }
+
+/* ========== LAYOUT ========== */
+.layout { display: flex; min-height: calc(100vh - var(--topnav-h)); }
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+    width: var(--sidebar-w); background: var(--card);
+    border-right: 1.5px solid var(--border);
+    position: sticky; top: var(--topnav-h);
+    height: calc(100vh - var(--topnav-h));
+    display: flex; flex-direction: column;
+    padding: 16px 0; overflow-y: auto;
+}
+.sidebar-group-label {
+    font-family: 'Outfit', sans-serif; font-weight: 700;
+    font-size: 0.72rem; color: var(--text-soft);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 12px 20px 6px;
+}
+.sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px; font-size: 0.92rem; font-weight: 500;
+    color: var(--text); cursor: pointer; transition: all 0.15s;
+    border-left: 3px solid transparent; text-decoration: none;
+}
+.sidebar-item:hover { background: var(--bg); color: var(--charcoal); }
+.sidebar-item.active {
+    background: linear-gradient(90deg, rgba(255,31,90,0.06), transparent);
+    border-left-color: var(--pink); color: var(--pink); font-weight: 600;
+}
+.sidebar-item .nav-icon {
+    width: 20px; height: 20px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+}
+.sidebar-item .nav-icon svg { width: 18px; height: 18px; stroke-width: 1.8; }
+.sidebar-item.active .nav-icon svg { stroke: var(--pink); }
+.sidebar-spacer { flex: 1; min-height: 24px; }
+.sidebar-divider { height: 1px; background: var(--border); margin: 8px 20px; }
+.sidebar-cta {
+    margin: 8px 16px 0; padding: 10px;
+    background: linear-gradient(135deg, var(--pink), #E0184B);
+    color: white; border: none; border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; text-align: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.sidebar-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,31,90,0.25); }
+
+/* ========== MAIN ========== */
+.main { flex: 1; padding: 24px 32px; max-width: 1200px; }
+
+/* ========== BREADCRUMB ========== */
+.breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px; font-size: 0.85rem;
+}
+.breadcrumb a {
+    color: var(--teal); text-decoration: none; font-weight: 500;
+    transition: color 0.15s;
+}
+.breadcrumb a:hover { color: #0E7490; text-decoration: underline; }
+.breadcrumb .sep { color: var(--text-soft); }
+.breadcrumb .current { color: var(--text-soft); font-weight: 500; }
+
+/* ========== PAGE HEADER ========== */
+.page-header { margin-bottom: 24px; }
+.page-header-top { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+.page-header h1 {
+    font-family: 'Outfit', sans-serif; font-weight: 700;
+    font-size: 1.65rem; color: var(--charcoal);
+}
+.status-pill {
+    font-size: 0.78rem; font-weight: 600; padding: 4px 12px;
+    border-radius: 20px; display: inline-block;
+}
+.status-pill.active { background: rgba(34,197,94,0.1); color: #16A34A; }
+.page-header-meta {
+    display: flex; align-items: center; gap: 20px;
+    font-size: 0.88rem; color: var(--text-soft);
+}
+.meta-item { display: flex; align-items: center; gap: 6px; }
+.meta-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.meta-item a {
+    color: var(--teal); text-decoration: none; font-weight: 500;
+    transition: color 0.15s;
+}
+.meta-item a:hover { color: #0E7490; text-decoration: underline; }
+.meta-divider { width: 1px; height: 16px; background: var(--border); }
+
+/* ========== METRICS ========== */
+.metrics-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-bottom: 20px;
+}
+.metric-card {
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 16px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 3px solid var(--teal);
+}
+.metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.metric-card .metric-name {
+    font-size: 0.75rem; font-weight: 600; color: var(--text-soft);
+    text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px;
+}
+.metric-card .metric-value {
+    font-family: 'Outfit', sans-serif; font-weight: 700;
+    font-size: 1.45rem; color: var(--charcoal); line-height: 1.2;
+}
+.metric-card .metric-sub {
+    font-size: 0.82rem; color: var(--text-soft); font-weight: 400;
+    font-family: 'DM Sans', sans-serif;
+}
+.metric-card .metric-detail { font-size: 0.78rem; color: var(--text-soft); margin-top: 3px; }
+
+/* ========== CONTENT & DELIVERY SECTION ========== */
+.info-section {
+    margin-bottom: 20px;
+}
+.info-card {
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 20px;
+    box-shadow: var(--shadow-card);
+}
+.info-card-title {
+    font-family: 'Outfit', sans-serif; font-weight: 600;
+    font-size: 0.82rem; color: var(--text-soft);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 14px;
+}
+
+/* Contents list */
+.content-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.content-row:last-child { border-bottom: none; }
+.content-row-left { display: flex; align-items: center; gap: 10px; }
+.content-row-right { display: flex; align-items: center; gap: 24px; text-align: right; }
+.content-instructor {
+    font-size: 0.82rem; color: var(--charcoal); font-weight: 500;
+}
+.content-instructor a {
+    color: var(--teal); text-decoration: none; transition: color 0.15s;
+}
+.content-instructor a:hover { color: #0E7490; text-decoration: underline; }
+.content-instructor.school-run {
+    color: var(--text-soft); font-style: italic; font-weight: 400;
+}
+.content-name a,
+.content-name .content-link {
+    font-weight: 600; color: var(--charcoal); text-decoration: none;
+    transition: color 0.15s; cursor: pointer;
+    background: none; border: none; padding: 0;
+    font-family: 'DM Sans', sans-serif; font-size: inherit;
+}
+.content-name a:hover,
+.content-name .content-link:hover { color: var(--teal); text-decoration: underline; }
+.content-type {
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 2px 8px; border-radius: 4px;
+}
+.content-type.course { background: rgba(8,145,178,0.08); color: var(--teal); }
+.content-type.extra { background: rgba(255,140,0,0.08); color: var(--orange); }
+.blocks-released {
+    font-size: 0.82rem; color: var(--text-soft); white-space: nowrap;
+}
+.blocks-bar {
+    width: 60px; height: 4px; border-radius: 2px;
+    background: var(--border); display: inline-block;
+    vertical-align: middle; margin-left: 8px; position: relative;
+    overflow: hidden;
+}
+.blocks-bar-fill {
+    height: 100%; border-radius: 2px; background: var(--teal);
+    position: absolute; left: 0; top: 0;
+}
+
+/* Instructor inline */
+.instructor-inline-name { font-weight: 600; color: var(--charcoal); font-size: 0.9rem; }
+.instructor-inline-role { font-size: 0.8rem; color: var(--text-soft); margin-top: 1px; }
+
+/* Instructor card (legacy) */
+.instructor-info { display: flex; align-items: center; gap: 14px; }
+.instructor-avatar {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #DBEAFE, #93C5FD);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+}
+.instructor-details { flex: 1; }
+.instructor-name { font-weight: 600; color: var(--charcoal); font-size: 0.95rem; }
+.instructor-role { font-size: 0.82rem; color: var(--text-soft); margin-top: 1px; }
+.instructor-actions { display: flex; gap: 8px; margin-top: 10px; }
+.btn-contact {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    background: var(--card); font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; font-weight: 600; color: var(--text);
+    cursor: pointer; transition: all 0.15s; text-decoration: none;
+}
+.btn-contact:hover { background: var(--bg); border-color: var(--text-soft); }
+.btn-contact svg { width: 14px; height: 14px; }
+
+/* ========== STUDENT TABLE ========== */
+.data-section {
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 18px; box-shadow: var(--shadow-card); overflow: hidden;
+}
+.data-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; }
+.data-header-left { display: flex; align-items: center; gap: 12px; }
+.section-title {
+    font-family: 'Outfit', sans-serif; font-weight: 600;
+    font-size: 0.95rem; color: var(--charcoal);
+}
+.count-pill {
+    font-size: 0.75rem; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; background: var(--bg); color: var(--text-soft);
+}
+.data-actions { display: flex; align-items: center; gap: 10px; }
+.search-box {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: var(--bg); transition: border-color 0.2s;
+}
+.search-box:focus-within { border-color: var(--pink); }
+.search-box input {
+    border: none; background: transparent; font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; color: var(--text); outline: none; width: 140px;
+}
+.search-box input::placeholder { color: #B0B5BF; }
+.search-box svg { width: 16px; height: 16px; color: var(--text-soft); flex-shrink: 0; }
+.btn-export {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    background: var(--card); font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; font-weight: 600; color: var(--text);
+    cursor: pointer; transition: all 0.15s;
+}
+.btn-export:hover { background: var(--bg); border-color: var(--text-soft); }
+.btn-export svg { width: 16px; height: 16px; }
+.tab-divider { height: 1px; background: var(--border); }
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+    text-align: left; padding: 12px 20px;
+    font-family: 'Outfit', sans-serif; font-weight: 600;
+    font-size: 0.78rem; color: var(--text-soft);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    background: var(--bg); border-bottom: 1.5px solid var(--border);
+}
+.data-table td { padding: 14px 20px; font-size: 0.9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr { transition: background 0.15s; cursor: pointer; }
+.data-table tbody tr:hover { background: #FAFBFE; }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.student-cell { display: flex; align-items: center; gap: 10px; }
+.student-avatar {
+    width: 34px; height: 34px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem; flex-shrink: 0;
+}
+.student-name { font-weight: 600; color: var(--charcoal); }
+.student-handle { font-size: 0.8rem; color: var(--text-soft); font-weight: 400; }
+.status-dot { display: flex; align-items: center; gap: 7px; }
+.status-dot .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.status-dot .dot.green { background: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.15); }
+.status-dot .dot.amber { background: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
+.status-dot .dot.red { background: var(--red); box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }
+.status-dot .label { font-size: 0.82rem; color: var(--text-soft); }
+.email-link {
+    color: var(--teal); text-decoration: none; font-size: 0.82rem;
+    transition: color 0.15s; display: inline-flex; align-items: center; gap: 4px;
+}
+.email-link:hover { color: #0E7490; text-decoration: underline; }
+.email-link svg { width: 14px; height: 14px; }
+.drill-arrow { color: var(--border); transition: color 0.15s, transform 0.15s; font-size: 1.2rem; }
+.data-table tr:hover .drill-arrow { color: var(--text-soft); transform: translateX(2px); }
+
+.table-footer {
+    padding: 14px 20px; display: flex; align-items: center;
+    justify-content: space-between; border-top: 1px solid var(--border);
+}
+.table-footer span { font-size: 0.82rem; color: var(--text-soft); }
+.table-footer-btns { display: flex; gap: 6px; }
+.table-footer-btns button {
+    padding: 5px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+    background: var(--card); font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; color: var(--text-soft); cursor: pointer; transition: all 0.15s;
+}
+.table-footer-btns button:last-child { color: var(--text); font-weight: 600; }
+.table-footer-btns button:hover { background: var(--bg); }
+.table-footer-btns button:disabled { cursor: default; }
+.table-footer-btns button:disabled:hover { background: var(--card); }
+
+/* ========== DESCRIPTION POPOVER ========== */
+.popover-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.15); z-index: 200;
+}
+.popover-overlay.show { display: flex; align-items: center; justify-content: center; }
+.popover {
+    background: var(--card); border-radius: 16px; padding: 24px;
+    max-width: 480px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    position: relative; animation: popIn 0.2s ease-out;
+}
+@keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.popover-close {
+    position: absolute; top: 12px; right: 12px;
+    width: 28px; height: 28px; border: none; background: var(--bg);
+    border-radius: 8px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    color: var(--text-soft); font-size: 1.1rem; transition: background 0.15s;
+}
+.popover-close:hover { background: var(--border); }
+.popover-type {
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 6px;
+}
+.popover-type.course { color: var(--teal); }
+.popover-type.extra { color: var(--orange); }
+.popover h3 {
+    font-family: 'Outfit', sans-serif; font-weight: 700;
+    font-size: 1.15rem; color: var(--charcoal); margin-bottom: 12px;
+}
+.popover p { font-size: 0.9rem; color: var(--text); line-height: 1.6; margin-bottom: 10px; }
+.popover .blocks-info {
+    font-size: 0.82rem; color: var(--text-soft); font-weight: 500;
+    padding-top: 10px; border-top: 1px solid var(--border);
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.main > * { animation: fadeInUp 0.5s ease-out; }
+
+@media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+    .metrics-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPNAV -->
+<nav class="topnav">
+    <div class="topnav-left">
+        <a href="#" class="logo">hatch<span>loom</span></a>
+        <div class="school-admin-pill">School Admin</div>
+        <div class="school-name">Ridgewood Academy</div>
+    </div>
+    <div class="topnav-right">
+        <div class="topnav-icon" title="Messages" style="cursor:pointer">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+          </svg>
+          <span class="notif-badge" style="width:16px;height:16px;top:1px;right:0px;font-size:0.6rem;font-weight:700;color:white;display:flex;align-items:center;justify-content:center">3</span>
+        </div>
+        <div class="topnav-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+            <span class="notif-badge"></span>
+        </div>
+        <div class="topnav-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div class="rep-chip">
+            <div class="rep-avatar">MP</div>
+            <span class="rep-name">Ms. Patel</span>
+        </div>
+    </div>
+</nav>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-group-label">Ridgewood Academy</div>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg></span>
+            Dashboard
+        </a>
+        <a class="sidebar-item active" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342"/></svg></span>
+            Experiences
+        </a>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg></span>
+            Enrolment
+        </a>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></span>
+            Curriculum Alignment
+        </a>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-5.54 0"/></svg></span>
+            Credentials
+        </a>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-group-label">Account</div>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></span>
+            Plan & Billing
+        </a>
+        <div class="sidebar-divider"></div>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
+            Settings
+        </a>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg></span>
+            Contact Hatchloom
+        </a>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+        <!-- BREADCRUMB -->
+        <nav class="breadcrumb">
+            <a href="#">Experiences</a>
+            <span class="sep">›</span>
+            <a href="#">Business Foundations</a>
+            <span class="sep">›</span>
+            <span class="current">Cohort A</span>
+        </nav>
+
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+            <div class="page-header-top">
+                <h1>Business Foundations · Cohort A</h1>
+                <span class="status-pill active">Active</span>
+            </div>
+            <div class="page-header-meta">
+                <div class="meta-item">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                    Sep 9, 2025 – Jun 20, 2026
+                </div>
+                <div class="meta-divider"></div>
+                <div class="meta-item">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                    Coordinator: Mrs. Singh · <a href="/cdn-cgi/l/email-protection#3f5b114c565158577f4c4b4c115e5d115c5e"><span class="__cf_email__" data-cfemail="aace84d9c3c4cdc2ead9ded984cbc884c9cb">[email&#160;protected]</span></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- METRICS -->
+        <div class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-name">Students Enrolled</div>
+                <div class="metric-value">22</div>
+                <div class="metric-detail">19 active this week</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-name">Credit Progress</div>
+                <div class="metric-value">58% <span class="metric-sub">of 12 credits</span></div>
+                <div class="metric-detail">Progress toward target</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-name">Timely Completion</div>
+                <div class="metric-value">76%</div>
+                <div class="metric-detail">Students on schedule</div>
+            </div>
+        </div>
+
+        <!-- CONTENTS & INSTRUCTOR -->
+        <div class="info-section">
+            <div class="info-card" style="width:100%">
+                <div class="info-card-title">Contents & Delivery</div>
+                <div class="content-row">
+                    <div class="content-row-left">
+                        <span class="content-type course">Course</span>
+                        <div class="content-name"><button class="content-link" onclick="showDescription('rab')">Running a Business</button></div>
+                    </div>
+                    <div class="content-row-right">
+                        <div class="content-instructor">Mr. Hoffman · <a href="/cdn-cgi/l/email-protection#cba3a4adada6aaa58ba3aabfa8a3a7a4a4a6e5a8a4a6"><span class="__cf_email__" data-cfemail="2c44434a4a414d426c444d584f4440434341024f4341">[email&#160;protected]</span></button></div>
+                        <div class="blocks-released">
+                            6 of 10 blocks
+                            <span class="blocks-bar"><span class="blocks-bar-fill" style="width:60%"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-row">
+                    <div class="content-row-left">
+                        <span class="content-type course">Course</span>
+                        <div class="content-name"><button class="content-link" onclick="showDescription('mkt101')">Marketing 101</button></div>
+                    </div>
+                    <div class="content-row-right">
+                        <div class="content-instructor">Ms. Okafor · <a href="/cdn-cgi/l/email-protection#6c03070d0a031e2c040d180f0400030301420f0301"><span class="__cf_email__" data-cfemail="aac5c1cbccc5d8eac2cbdec9c2c6c5c5c784c9c5c7">[email&#160;protected]</span></button></div>
+                        <div class="blocks-released">
+                            4 of 8 blocks
+                            <span class="blocks-bar"><span class="blocks-bar-fill" style="width:50%"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-row">
+                    <div class="content-row-left">
+                        <span class="content-type course">Course</span>
+                        <div class="content-name"><button class="content-link" onclick="showDescription('finlit')">Financial Literacy</button></div>
+                    </div>
+                    <div class="content-row-right">
+                        <div class="content-instructor">Mr. Reeves · <a href="/cdn-cgi/l/email-protection#f7859292819284b79f9683949f9b98989ad994989a"><span class="__cf_email__" data-cfemail="12607777647761527a7366717a7e7d7d7f3c717d7f">[email&#160;protected]</span></button></div>
+                        <div class="blocks-released">
+                            2 of 8 blocks
+                            <span class="blocks-bar"><span class="blocks-bar-fill" style="width:25%"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-row">
+                    <div class="content-row-left">
+                        <span class="content-type extra">Event</span>
+                        <div class="content-name"><button class="content-link" onclick="showDescription('pitch')">Pitch Event</button></div>
+                    </div>
+                    <div class="content-row-right">
+                        <div class="content-instructor school-run">School-run</div>
+                        <div class="blocks-released" style="font-style:italic">Not yet scheduled</div>
+                    </div>
+                </div>
+                <div class="content-row">
+                    <div class="content-row-left">
+                        <span class="content-type extra">Quiz</span>
+                        <div class="content-name"><button class="content-link" onclick="showDescription('bmquiz')">Business Model Quiz</button></div>
+                    </div>
+                    <div class="content-row-right">
+                        <div class="content-instructor school-run">School-run</div>
+                        <div class="blocks-released" style="font-style:italic">Not yet scheduled</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STUDENT TABLE -->
+        <div class="data-section">
+            <div class="data-header">
+                <div class="data-header-left">
+                    <span class="section-title">Students</span>
+                    <span class="count-pill">22 enrolled</span>
+                </div>
+                <div class="data-actions">
+                    <div class="search-box">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                        <input type="text" placeholder="Search students...">
+                    </div>
+                    <button class="btn-export">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                        Export
+                    </button>
+                </div>
+            </div>
+            <div class="tab-divider"></div>
+
+            <table class="data-table">
+                <thead><tr>
+                    <th style="width:30%">Student</th>
+                    <th style="width:6%">Grade</th>
+                    <th style="width:6%">Status</th>
+                    <th style="width:14%">Last Active</th>
+                    <th style="width:28%">Contact</th>
+                    <th style="width:10%">Credits</th>
+                    <th style="width:4%"></th>
+                </tr></thead>
+                <tbody>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FDE68A,#F97316)">🦊</div><div><div class="student-name">Alex Johnson</div><div class="student-handle">FireFox · @firefox_hl</div></div></div></td>
+                        <td>8</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#5e3f7033372a3d363b32321e2d2a2d703f3c703d3f" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="4726692a2e33242f222b2b07343334692625692426">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">2</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FDE68A,#EF4444)">🐯</div><div><div class="student-name">Priya K.</div><div class="student-handle">TigerSpark · @tigerspark</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#0c7c226779616d7e4c7f787f226d6e226f6d" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="b5c59bdec0d8d4c7f5c6c1c69bd4d79bd6d4">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">3</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#A5F3FC,#0891B2)">🐬</div><div><div class="student-name">Jordan L.</div><div class="student-handle">DolphinDash · @dolphindash</div></div></div></td>
+                        <td>9</td>
+                        <td><div class="status-dot"><span class="dot amber"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">3 days ago</td>
+                        <td><a href="/cdn-cgi/l/email-protection#7b1155171e1e3b080f08551a1955181a" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="e68cc88a8383a6959295c88784c88587">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">1</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#E9D5FF,#A855F7)">🦋</div><div><div class="student-name">Sam T.</div><div class="student-handle">PixelWings · @pixelwings</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Yesterday</td>
+                        <td><a href="/cdn-cgi/l/email-protection#473469332629262c2607343334692625692426" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="e89bc69c8986898389a89b9c9bc6898ac68b89">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">0</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FDE68A,#DC2626)">🦁</div><div><div class="student-name">Marcus R.</div><div class="student-handle">LionHeart · @lionheart</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#5f32712d3a263a2c1f2c2b2c713e3d713c3e" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="264b0854435f435566555255084744084547">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">2</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FBCFE8,#EC4899)">🌸</div><div><div class="student-name">Ava C.</div><div class="student-handle">BloomBot · @bloombot</div></div></div></td>
+                        <td>9</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#b6d798d5ded3d8f6c5c2c598d7d498d5d7" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="7e1f501d161b103e0d0a0d501f1c501d1f">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">2</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#CBD5E1,#475569)">🐺</div><div><div class="student-name">Ethan D.</div><div class="student-handle">CodeWolf · @codewolf</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot red"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">5 days ago</td>
+                        <td><a href="/cdn-cgi/l/email-protection#84e1aae0e5f2edf7c4f7f0f7aae5e6aae7e5" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="ed88c3898c9b849ead9e999ec38c8fc38e8c">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">0</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#BFDBFE,#3B82F6)">🦅</div><div><div class="student-name">Maya P.</div><div class="student-handle">StarForge · @starforge</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#1a77346a7b6e7f765a696e69347b7834797b" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="cba6e5bbaabfaea78bb8bfb8e5aaa9e5a8aa">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">4</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#D9F99D,#65A30D)">🌿</div><div><div class="student-name">Liam W.</div><div class="student-handle">GreenSprout · @greensprout</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#8de1a3fae2e3eacdfef9fea3ecefa3eeec" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="375b194058595077444344195655195456">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">2</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FED7AA,#EA580C)">🔥</div><div><div class="student-name">Sofia R.</div><div class="student-handle">EmberTrail · @embertrail</div></div></div></td>
+                        <td>9</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Yesterday</td>
+                        <td><a href="/cdn-cgi/l/email-protection#35461b475a51475c5240504f754641461b54571b5654" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="eb98c599848f99828c9e8e91ab989f98c58a89c5888a">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">3</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#C4B5FD,#7C3AED)">🔮</div><div><div class="student-name">Noah B.</div><div class="student-handle">NovaPulse · @novapulse</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot amber"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">2 days ago</td>
+                        <td><a href="/cdn-cgi/l/email-protection#b5db9bd7c7dac2dbf5c6c1c69bd4d79bd6d4" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="80eeaee2f2eff7eec0f3f4f3aee1e2aee3e1">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">1</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FECACA,#B91C1C)">🎯</div><div><div class="student-name">Isla F.</div><div class="student-handle">BullsEye · @bullseye</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#3e5710584c5f4d5b4c7e4d4a4d105f5c105d5f" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="b9d097dfcbd8cadccbf9cacdca97d8db97dad8">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">3</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#A7F3D0,#059669)">🌊</div><div><div class="student-name">Kai N.</div><div class="student-handle">TideRunner · @tiderunner</div></div></div></td>
+                        <td>9</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#375c1959565c565a42455677444344195655195456" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="90fbbefef1fbf1fde5e2f1d0e3e4e3bef1f2bef3f1">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">2</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FEF08A,#CA8A04)">⚡</div><div><div class="student-name">Zara H.</div><div class="student-handle">BoltStrike · @boltstrike</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot red"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">6 days ago</td>
+                        <td><a href="/cdn-cgi/l/email-protection#1f6531777e6c6c7e715f6c6b6c317e7d317c7e" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="19633771786a6a7877596a6d6a37787b377a78">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">0</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#E0E7FF,#4F46E5)">🛸</div><div><div class="student-name">Owen G.</div><div class="student-handle">OrbitDrift · @orbitdrift</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#600f4e0712010e14201314134e01024e0301" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="711e5f1603101f05310205025f10135f1210">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">3</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FBCFE8,#DB2777)">🎀</div><div><div class="student-name">Mia J.</div><div class="student-handle">PinkSpark · @pinkspark</div></div></div></td>
+                        <td>9</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Yesterday</td>
+                        <td><a href="/cdn-cgi/l/email-protection#a2cf8cc8cdcaccd1cdcce2d1d6d18cc3c08cc1c3" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="64094a0e0b0c0a170b0a241710174a05064a0705">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">1</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#CCFBF1,#0D9488)">🐢</div><div><div class="student-name">Leo S.</div><div class="student-handle">ShellCraft · @shellcraft</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot amber"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">4 days ago</td>
+                        <td><a href="/cdn-cgi/l/email-protection#5a36742933343d321a292e29743b3874393b" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="3a56144953545d527a494e49145b5814595b">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">1</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#DDD6FE,#7C3AED)">🦄</div><div><div class="student-name">Chloe M.</div><div class="student-handle">MysticHorn · @mystichorn</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#e784c98a8695938e89829da7949394c98685c98486" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="096a2764687b7d60676c73497a7d7a27686b276a68">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">2</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FEE2E2,#DC2626)">🎸</div><div><div class="student-name">Jake O.</div><div class="student-handle">RiffRider · @riffrider</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#8ce6a2e3efe3e2e2e3feccfff8ffa2edeea2efed" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="187236777b777676776a586b6c6b36797a367b79">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">2</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#BAE6FD,#0284C7)">🐧</div><div><div class="student-name">Emma T.</div><div class="student-handle">IceSlide · @iceslide</div></div></div></td>
+                        <td>9</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Today</td>
+                        <td><a href="/cdn-cgi/l/email-protection#1e7b306a7f6772716c5e6d6a6d307f7c307d7f" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="1e7b306a7f6772716c5e6d6a6d307f7c307d7f">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">3</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="student-cell"><div class="student-avatar" style="background:linear-gradient(135deg,#FDE68A,#D97706)">🐝</div><div><div class="student-name">Ryan K.</div><div class="student-handle">BuzzHive · @buzzhive</div></div></div></td>
+                        <td>10</td>
+                        <td><div class="status-dot"><span class="dot green"></span></div></td>
+                        <td style="color:var(--text-soft);font-size:0.85rem">Yesterday</td>
+                        <td><a href="/cdn-cgi/l/email-protection#d7a5f9bcbeba97a4a3a4f9b6b5f9b4b6" class="email-link"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg><span class="__cf_email__" data-cfemail="3c4e125755517c4f484f125d5e125f5d">[email&#160;protected]</span></a></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--charcoal)">1</td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="table-footer">
+                <span id="page-info">Showing 1–8 of 22 students</span>
+                <div class="table-footer-btns"><button id="btn-prev" onclick="changePage(-1)">Previous</button><button id="btn-next" onclick="changePage(1)">Next</button></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- DESCRIPTION POPOVERS -->
+<div class="popover-overlay" id="popover-rab" onclick="hideDescription('rab')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDescription('rab')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Running a Business</h3>
+        <p>A hands-on course covering the fundamentals of operating a real business — from registering a venture and managing daily operations to understanding cash flow, inventory, and customer service. Students learn by running simulated businesses and making decisions with real consequences.</p>
+        <div class="blocks-info">10 blocks · Estimated 20 hours of learning</div>
+    </div>
+</div>
+
+<div class="popover-overlay" id="popover-mkt101" onclick="hideDescription('mkt101')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDescription('mkt101')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Marketing 101</h3>
+        <p>An introduction to marketing strategy for young entrepreneurs. Students learn to identify target audiences, craft value propositions, build brand identity, and create marketing campaigns across digital and physical channels. Each block culminates in a deliverable for the student's own venture.</p>
+        <div class="blocks-info">8 blocks · Estim

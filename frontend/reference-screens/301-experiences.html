@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hatchloom — Experiences</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --pink: #FF1F5A;
+    --teal: #0891B2;
+    --orange: #FF8C00;
+    --charcoal: #1E1E2E;
+    --text: #2D2D2D;
+    --text-soft: #6B7280;
+    --bg: #F7F8FC;
+    --card: #FFFFFF;
+    --border: #EDEEF2;
+    --green: #22C55E;
+    --amber: #F59E0B;
+    --red: #EF4444;
+    --topnav-h: 58px;
+    --sidebar-w: 215px;
+    --shadow-card: 0 2px 12px rgba(0,0,0,0.04);
+    --shadow-hover: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+html { font-size: 14px; }
+body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ========== TOPNAV ========== */
+.topnav {
+    position: sticky; top: 0; z-index: 100;
+    height: var(--topnav-h);
+    background: var(--card);
+    border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+}
+.topnav-left { display: flex; align-items: center; gap: 16px; }
+.logo {
+    font-family: 'Outfit', sans-serif; font-weight: 800;
+    font-size: 1.35rem; color: var(--charcoal);
+    letter-spacing: -0.5px; text-decoration: none;
+}
+.logo span { color: var(--pink); }
+.school-admin-pill {
+    background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+    color: #4338CA; font-size: 0.78rem; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px; letter-spacing: 0.02em;
+}
+.school-name {
+    font-family: 'Outfit', sans-serif; font-weight: 600;
+    font-size: 0.92rem; color: var(--charcoal);
+}
+.topnav-right { display: flex; align-items: center; gap: 14px; }
+.topnav-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s;
+    position: relative; color: var(--text-soft);
+}
+.topnav-icon:hover { background: var(--bg); }
+.topnav-icon svg { width: 20px; height: 20px; }
+.notif-badge {
+    position: absolute; top: 4px; right: 4px;
+    width: 8px; height: 8px;
+    background: var(--pink); border-radius: 50%; border: 2px solid var(--card);
+}
+.rep-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px; border-radius: 20px;
+    background: var(--bg); cursor: pointer; transition: background 0.15s;
+}
+.rep-chip:hover { background: var(--border); }
+.rep-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.75rem;
+}
+.rep-name { font-size: 0.85rem; font-weight: 600; color: var(--charcoal); }
+
+/* ========== LAYOUT ========== */
+.layout { display: flex; min-height: calc(100vh - var(--topnav-h)); }
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+    width: var(--sidebar-w); background: var(--card);
+    border-right: 1.5px solid var(--border);
+    position: sticky; top: var(--topnav-h);
+    height: calc(100vh - var(--topnav-h));
+    display: flex; flex-direction: column;
+    padding: 16px 0; overflow-y: auto;
+}
+.sidebar-group-label {
+    font-family: 'Outfit', sans-serif; font-weight: 700;
+    font-size: 0.72rem; color: var(--text-soft);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 12px 20px 6px;
+}
+.sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px; font-size: 0.92rem; font-weight: 500;
+    color: var(--text); cursor: pointer; transition: all 0.15s;
+    border-left: 3px solid transparent; text-decoration: none;
+}
+.sidebar-item:hover { background: var(--bg); color: var(--charcoal); }
+.sidebar-item.active {
+    background: linear-gradient(90deg, rgba(255,31,90,0.06), transparent);
+    border-left-color: var(--pink); color: var(--pink); font-weight: 600;
+}
+.sidebar-item .nav-icon {
+    width: 20px; height: 20px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+}
+.sidebar-item .nav-icon svg { width: 18px; height: 18px; stroke-width: 1.8; }
+.sidebar-item.active .nav-icon svg { stroke: var(--pink); }
+.sidebar-spacer { flex: 1; min-height: 24px; }
+.sidebar-divider { height: 1px; background: var(--border); margin: 8px 20px; }
+.sidebar-cta {
+    margin: 8px 16px 0; padding: 10px;
+    background: linear-gradient(135deg, var(--pink), #E0184B);
+    color: white; border: none; border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; text-align: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.sidebar-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,31,90,0.25); }
+.sidebar-cta svg { width: 16px; height: 16px; }
+
+/* ========== MAIN ========== */
+.main { flex: 1; padding: 24px 32px; max-width: 1200px; }
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.page-header-text h1 {
+    font-family: 'Outfit', sans-serif; font-weight: 700;
+    font-size: 1.65rem; color: var(--charcoal); margin-bottom: 4px;
+}
+.page-header-text p { color: var(--text-soft); font-size: 0.92rem; }
+
+/* ========== CTA BUTTON ========== */
+.btn-create {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--pink), #E0184B);
+    color: white; border: none; border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-create:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,31,90,0.3); }
+.btn-create svg { width: 18px; height: 18px; }
+
+/* ========== TABLE SECTION ========== */
+.data-section {
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 18px; box-shadow: var(--shadow-card); overflow: hidden;
+}
+.data-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; }
+.data-header-left { display: flex; align-items: center; gap: 12px; }
+.data-header-left .section-title {
+    font-family: 'Outfit', sans-serif; font-weight: 600;
+    font-size: 0.95rem; color: var(--charcoal);
+}
+.data-header-left .count-pill {
+    font-size: 0.75rem; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; background: var(--bg); color: var(--text-soft);
+}
+.data-actions { display: flex; align-items: center; gap: 10px; }
+.search-box {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: var(--bg); transition: border-color 0.2s;
+}
+.search-box:focus-within { border-color: var(--pink); }
+.search-box input {
+    border: none; background: transparent; font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; color: var(--text); outline: none; width: 160px;
+}
+.search-box input::placeholder { color: #B0B5BF; }
+.search-box svg { width: 16px; height: 16px; color: var(--text-soft); flex-shrink: 0; }
+.tab-divider { height: 1px; background: var(--border); }
+
+/* ========== TABLE ========== */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+    text-align: left; padding: 12px 20px;
+    font-family: 'Outfit', sans-serif; font-weight: 600;
+    font-size: 0.78rem; color: var(--text-soft);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    background: var(--bg); border-bottom: 1.5px solid var(--border);
+}
+.data-table td { padding: 14px 20px; font-size: 0.9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr { transition: background 0.15s; }
+.data-table tbody tr:hover { background: #FAFBFE; }
+.data-table tbody tr:last-child td { border-bottom: none; }
+
+/* Status pills */
+.status-pill {
+    font-size: 0.78rem; font-weight: 600; padding: 4px 10px;
+    border-radius: 20px; display: inline-block;
+}
+.status-pill.active { background: rgba(34,197,94,0.1); color: #16A34A; }
+.status-pill.inactive { background: var(--bg); color: var(--text-soft); }
+
+/* Coordinator cell */
+.coordinator-cell .coord-name { font-weight: 600; color: var(--charcoal); font-size: 0.88rem; }
+.coordinator-cell .coord-email {
+    font-size: 0.78rem; color: var(--teal); text-decoration: none;
+    transition: color 0.15s;
+}
+.coordinator-cell .coord-email:hover { color: #0E7490; text-decoration: underline; }
+
+/* Contents cell */
+.contents-cell { line-height: 1.6; }
+.content-item { font-size: 0.88rem; color: var(--text); }
+.content-item .item-type {
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.03em; color: var(--text-soft); margin-left: 4px;
+}
+.content-item.extra .item-type { color: var(--orange); }
+.contents-more {
+    font-size: 0.82rem; font-weight: 600; color: var(--teal);
+    cursor: pointer; transition: color 0.15s; display: inline-block;
+    margin-top: 2px; border: none; background: none; padding: 0;
+    font-family: 'DM Sans', sans-serif;
+}
+.contents-more:hover { color: #0E7490; }
+.contents-expanded {
+    display: none; margin-top: 2px;
+}
+.contents-expanded.show { display: block; }
+
+/* Content links */
+.content-link {
+    color: var(--charcoal); text-decoration: none; font-weight: 500;
+    transition: color 0.15s; cursor: pointer;
+    background: none; border: none; padding: 0; font-family: 'DM Sans', sans-serif;
+    font-size: inherit;
+}
+.content-link:hover { color: var(--teal); text-decoration: underline; }
+
+/* Popover */
+.popover-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.15); z-index: 200;
+}
+.popover-overlay.show { display: flex; align-items: center; justify-content: center; }
+.popover {
+    background: var(--card); border-radius: 16px; padding: 24px;
+    max-width: 480px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    position: relative; animation: popIn 0.2s ease-out;
+}
+@keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.popover-close {
+    position: absolute; top: 12px; right: 12px;
+    width: 28px; height: 28px; border: none; background: var(--bg);
+    border-radius: 8px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    color: var(--text-soft); font-size: 1.1rem; transition: background 0.15s;
+}
+.popover-close:hover { background: var(--border); }
+.popover-type {
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 6px;
+}
+.popover-type.course { color: var(--teal); }
+.popover-type.extra { color: var(--orange); }
+.popover h3 {
+    font-family: 'Outfit', sans-serif; font-weight: 700;
+    font-size: 1.15rem; color: var(--charcoal); margin-bottom: 12px;
+}
+.popover p { font-size: 0.9rem; color: var(--text); line-height: 1.6; margin-bottom: 10px; }
+.popover .blocks-info {
+    font-size: 0.82rem; color: var(--text-soft); font-weight: 500;
+    padding-top: 10px; border-top: 1px solid var(--border);
+}
+
+/* Credits cell */
+.credits-cell {
+    font-family: 'Outfit', sans-serif; font-weight: 600;
+    color: var(--charcoal); font-size: 0.92rem;
+}
+
+/* Cohorts cell */
+.cohort-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.85rem; font-weight: 600; color: var(--teal);
+    text-decoration: none; cursor: pointer; transition: color 0.15s;
+    padding: 2px 0;
+}
+.cohort-link + .cohort-link { margin-left: 0; }
+.cohort-link:hover { color: #0E7490; text-decoration: underline; }
+.cohort-link .student-count {
+    font-weight: 400; color: var(--text-soft);
+}
+.no-cohorts { font-size: 0.85rem; color: var(--text-soft); font-style: italic; }
+
+/* Cohorts stacking */
+td .cohort-link { display: flex; }
+
+/* Drill arrow */
+.drill-arrow { color: var(--border); transition: color 0.15s, transform 0.15s; font-size: 1.2rem; }
+.data-table tr:hover .drill-arrow { color: var(--text-soft); transform: translateX(2px); }
+
+/* Table footer */
+.table-footer {
+    padding: 14px 20px; display: flex; align-items: center;
+    justify-content: space-between; border-top: 1px solid var(--border);
+}
+.table-footer span { font-size: 0.82rem; color: var(--text-soft); }
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.main > * { animation: fadeInUp 0.5s ease-out; }
+
+@media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPNAV -->
+<nav class="topnav">
+    <div class="topnav-left">
+        <a href="#" class="logo">hatch<span>loom</span></a>
+        <div class="school-admin-pill">School Admin</div>
+        <div class="school-name">Ridgewood Academy</div>
+    </div>
+    <div class="topnav-right">
+        <div class="topnav-icon" title="Messages" style="cursor:pointer">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+          </svg>
+          <span class="notif-badge" style="width:16px;height:16px;top:1px;right:0px;font-size:0.6rem;font-weight:700;color:white;display:flex;align-items:center;justify-content:center">3</span>
+        </div>
+        <div class="topnav-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+            <span class="notif-badge"></span>
+        </div>
+        <div class="topnav-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div class="rep-chip">
+            <div class="rep-avatar">MP</div>
+            <span class="rep-name">Ms. Patel</span>
+        </div>
+    </div>
+</nav>
+
+<div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-group-label">Ridgewood Academy</div>
+
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg></span>
+            Dashboard
+        </a>
+        <a class="sidebar-item active" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342"/></svg></span>
+            Experiences
+        </a>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg></span>
+            Enrolment
+        </a>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></span>
+            Curriculum Alignment
+        </a>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-5.54 0"/></svg></span>
+            Credentials
+        </a>
+
+        <div class="sidebar-spacer"></div>
+
+        <div class="sidebar-group-label">Account</div>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></span>
+            Plan & Billing
+        </a>
+
+        <div class="sidebar-divider"></div>
+
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
+            Settings
+        </a>
+        <a class="sidebar-item" href="#">
+            <span class="nav-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg></span>
+            Contact Hatchloom
+        </a>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+        <div class="page-header">
+            <div class="page-header-text">
+                <h1>Experiences</h1>
+                <p>Programs your school has assembled from Hatchloom building blocks</p>
+            </div>
+            <button class="btn-create">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Create Experience
+            </button>
+        </div>
+
+        <!-- EXPERIENCES TABLE -->
+        <div class="data-section">
+            <div class="data-header">
+                <div class="data-header-left">
+                    <span class="section-title">All Experiences</span>
+                    <span class="count-pill">5 experiences · 3 active</span>
+                </div>
+                <div class="data-actions">
+                    <div class="search-box">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                        <input type="text" placeholder="Search experiences...">
+                    </div>
+                </div>
+            </div>
+            <div class="tab-divider"></div>
+
+            <table class="data-table">
+                <thead><tr>
+                    <th style="width:20%">Experience</th>
+                    <th style="width:7%">Grade</th>
+                    <th style="width:8%">Status</th>
+                    <th style="width:16%">Coordinator</th>
+                    <th style="width:24%">Contents</th>
+                    <th style="width:7%">Credits</th>
+                    <th style="width:14%">Cohorts</th>
+                    <th style="width:2%"></th>
+                </tr></thead>
+                <tbody>
+                    <!-- Row 1: Simple — one course -->
+                    <tr>
+                        <td><span style="font-weight:600;color:var(--charcoal)">Entrepreneurship 101</span></td>
+                        <td>8</td>
+                        <td><span class="status-pill active">Active</span></td>
+                        <td>
+                            <div class="coordinator-cell">
+                                <div class="coord-name">Mrs. Singh</div>
+                                <a href="/cdn-cgi/l/email-protection#62064c110b0c050a221116114c03004c0103" class="coord-email"><span class="__cf_email__" data-cfemail="cda9e3bea4a3aaa58dbeb9bee3acafe3aeac">[email&#160;protected]</span></a>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contents-cell">
+                                <div class="content-item"><button class="content-link" onclick="showDesc('dt101')">Design Thinking 101</button> <span class="item-type">course</span></div>
+                            </div>
+                        </td>
+                        <td><span class="credits-cell">5</span></td>
+                        <td>
+                            <a href="#" class="cohort-link">Cohort A <span class="student-count">(24)</span></a>
+                            <a href="#" class="cohort-link">Cohort B <span class="student-count">(20)</span></a>
+                        </td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+
+                    <!-- Row 2: Medium — one course + one sandbox problem -->
+                    <tr>
+                        <td><span style="font-weight:600;color:var(--charcoal)">Venture Lab</span></td>
+                        <td>9–10</td>
+                        <td><span class="status-pill active">Active</span></td>
+                        <td>
+                            <div class="coordinator-cell">
+                                <div class="coord-name">Mr. Torres</div>
+                                <a href="/cdn-cgi/l/email-protection#14663a607b66667167546760673a75763a7775" class="coord-email"><span class="__cf_email__" data-cfemail="54267a203b26263127142720277a35367a3735">[email&#160;protected]</span></a>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contents-cell">
+                                <div class="content-item"><button class="content-link" onclick="showDesc('innov')">Innovation Essentials</button> <span class="item-type">course</span></div>
+                                <div class="content-item extra"><button class="content-link" onclick="showDesc('sandbox')">Create an Opportunity</button> <span class="item-type">sandbox</span></div>
+                            </div>
+                        </td>
+                        <td><span class="credits-cell">8</span></td>
+                        <td>
+                            <a href="#" class="cohort-link">Cohort A <span class="student-count">(18)</span></a>
+                            <a href="#" class="cohort-link">Cohort B <span class="student-count">(15)</span></a>
+                            <a href="#" class="cohort-link">Cohort C <span class="student-count">(21)</span></a>
+                        </td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+
+                    <!-- Row 3: Complex — 3 courses + 1 quiz + 1 pitch event, overflow -->
+                    <tr>
+                        <td><span style="font-weight:600;color:var(--charcoal)">Business Foundations</span></td>
+                        <td>9–10</td>
+                        <td><span class="status-pill active">Active</span></td>
+                        <td>
+                            <div class="coordinator-cell">
+                                <div class="coord-name">Mrs. Singh</div>
+                                <a href="/cdn-cgi/l/email-protection#96f2b8e5fff8f1fed6e5e2e5b8f7f4b8f5f7" class="coord-email"><span class="__cf_email__" data-cfemail="a0c48ed3c9cec7c8e0d3d4d38ec1c28ec3c1">[email&#160;protected]</span></a>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contents-cell">
+                                <div class="content-item"><button class="content-link" onclick="showDesc('rab')">Running a Business</button> <span class="item-type">course</span></div>
+                                <div class="content-item"><button class="content-link" onclick="showDesc('mkt101')">Marketing 101</button> <span class="item-type">course</span></div>
+                                <button class="contents-more" onclick="toggleContents(this)">+3 more</button>
+                                <div class="contents-expanded">
+                                    <div class="content-item"><button class="content-link" onclick="showDesc('finlit')">Financial Literacy</button> <span class="item-type">course</span></div>
+                                    <div class="content-item extra"><button class="content-link" onclick="showDesc('pitch')">Pitch Event</button> <span class="item-type">event</span></div>
+                                    <div class="content-item extra"><button class="content-link" onclick="showDesc('bmquiz')">Business Model Quiz</button> <span class="item-type">quiz</span></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="credits-cell">12</span></td>
+                        <td>
+                            <a href="#" class="cohort-link">Cohort A <span class="student-count">(22)</span></a>
+                        </td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+
+                    <!-- Row 4: Inactive — completed cohort -->
+                    <tr>
+                        <td><span style="font-weight:600;color:var(--charcoal)">Social Enterprise 101</span></td>
+                        <td>11</td>
+                        <td><span class="status-pill inactive">Inactive</span></td>
+                        <td>
+                            <div class="coordinator-cell">
+                                <div class="coord-name">Mr. Torres</div>
+                                <a href="/cdn-cgi/l/email-protection#3c4e1248534e4e594f7c4f484f125d5e125f5d" class="coord-email"><span class="__cf_email__" data-cfemail="2a58045e4558584f596a595e59044b4804494b">[email&#160;protected]</span></a>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contents-cell">
+                                <div class="content-item"><button class="content-link" onclick="showDesc('social')">Social Innovation 101</button> <span class="item-type">course</span></div>
+                            </div>
+                        </td>
+                        <td><span class="credits-cell">3</span></td>
+                        <td>
+                            <span class="no-cohorts">No active cohorts</span>
+                        </td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+
+                    <!-- Row 5: Inactive — never staffed -->
+                    <tr>
+                        <td><span style="font-weight:600;color:var(--charcoal)">Intro to Side Hustles</span></td>
+                        <td>8–9</td>
+                        <td><span class="status-pill inactive">Inactive</span></td>
+                        <td>
+                            <div class="coordinator-cell">
+                                <div class="coord-name" style="color:var(--text-soft);font-weight:400;font-style:italic">Not assigned</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contents-cell">
+                                <div class="content-item"><button class="content-link" onclick="showDesc('hustler')">Hustler's Playbook</button> <span class="item-type">course</span></div>
+                            </div>
+                        </td>
+                        <td><span class="credits-cell">2</span></td>
+                        <td>
+                            <span class="no-cohorts">No cohorts</span>
+                        </td>
+                        <td><span class="drill-arrow">›</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="table-footer">
+                <span>5 experiences · 3 active · 2 inactive</span>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- DESCRIPTION POPOVERS -->
+<div class="popover-overlay" id="pop-dt101" onclick="hideDesc('dt101')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('dt101')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Design Thinking 101</h3>
+        <p>An introductory course to human-centred design, teaching students to identify real problems, empathise with users, prototype solutions, and iterate based on feedback. Students work through the five stages of design thinking applied to a real entrepreneurial challenge.</p>
+        <div class="blocks-info">12 blocks · Estimated 24 hours of learning</div>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-innov" onclick="hideDesc('innov')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('innov')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Innovation Essentials</h3>
+        <p>A course on identifying opportunities, generating ideas, and validating assumptions. Students learn lean startup methodology, customer discovery, and rapid prototyping — building the foundation for launching a real venture on the platform.</p>
+        <div class="blocks-info">10 blocks · Estimated 20 hours of learning</div>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-sandbox" onclick="hideDesc('sandbox')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('sandbox')">✕</button>
+        <div class="popover-type extra">Sandbox</div>
+        <h3>Create an Opportunity</h3>
+        <p>A sandbox problem where students identify a real-world opportunity and develop a viable business concept around it. Students research the market, define customer needs, and present a structured opportunity assessment to their peers.</p>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-rab" onclick="hideDesc('rab')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('rab')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Running a Business</h3>
+        <p>A hands-on course covering the fundamentals of operating a real business — from registering a venture and managing daily operations to understanding cash flow, inventory, and customer service. Students learn by running simulated businesses with real consequences.</p>
+        <div class="blocks-info">10 blocks · Estimated 20 hours of learning</div>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-mkt101" onclick="hideDesc('mkt101')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('mkt101')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Marketing 101</h3>
+        <p>An introduction to marketing strategy for young entrepreneurs. Students learn to identify target audiences, craft value propositions, build brand identity, and create marketing campaigns across digital and physical channels.</p>
+        <div class="blocks-info">8 blocks · Estimated 16 hours of learning</div>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-finlit" onclick="hideDesc('finlit')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('finlit')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Financial Literacy</h3>
+        <p>A practical course in money management and financial decision-making. Students learn budgeting, profit and loss analysis, pricing strategy, and basic accounting — all applied to their own ventures.</p>
+        <div class="blocks-info">8 blocks · Estimated 16 hours of learning</div>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-pitch" onclick="hideDesc('pitch')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('pitch')">✕</button>
+        <div class="popover-type extra">Event</div>
+        <h3>Pitch Event</h3>
+        <p>A school-organised event where students present their venture to a panel of judges. Students prepare a structured pitch covering their problem, solution, market, and financial projections. Added by Ridgewood Academy as a capstone assessment.</p>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-bmquiz" onclick="hideDesc('bmquiz')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('bmquiz')">✕</button>
+        <div class="popover-type extra">Quiz</div>
+        <h3>Business Model Quiz</h3>
+        <p>A summative assessment testing students' understanding of business model components — value proposition, customer segments, revenue streams, cost structure, and channels. Added by Ridgewood Academy as a knowledge check.</p>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-social" onclick="hideDesc('social')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('social')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Social Innovation 101</h3>
+        <p>An introduction to social entrepreneurship. Students learn to identify community problems, design solutions that create social value, and build sustainable business models that balance profit with purpose.</p>
+        <div class="blocks-info">8 blocks · Estimated 16 hours of learning</div>
+    </div>
+</div>
+
+<div class="popover-overlay" id="pop-hustler" onclick="hideDesc('hustler')">
+    <div class="popover" onclick="event.stopPropagation()">
+        <button class="popover-close" onclick="hideDesc('hustler')">✕</button>
+        <div class="popover-type course">Course</div>
+        <h3>Hustler's Playbook</h3>
+        <p>A fast-paced course on turning ideas into income. Students learn the basics of side hustles — finding a niche, pricing, selling online and offline, and managing time alongside school commitments.</p>
+        <div class="blocks-info">6 blocks · Estimated 12 hours of learning</div>
+    </div>
+<

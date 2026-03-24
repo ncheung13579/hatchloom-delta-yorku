@@ -1,0 +1,30 @@
+import axios from 'axios';
+import type { AxiosError } from 'axios';
+import type { ApiError } from '../types';
+
+const client = axios.create({
+  baseURL: '/api',
+  headers: { 'Content-Type': 'application/json' },
+});
+
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('hatchloom_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+client.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<ApiError>) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('hatchloom_token');
+      localStorage.removeItem('hatchloom_user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default client;
