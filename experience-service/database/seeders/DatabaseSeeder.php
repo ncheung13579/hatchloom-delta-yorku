@@ -126,6 +126,16 @@ class DatabaseSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'id' => 3,
+                'school_id' => 1,
+                'name' => 'Creative Problem Solving',
+                'description' => 'Design thinking and collaborative problem-solving workshops',
+                'status' => 'draft',
+                'created_by' => 3,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         // Business Foundations has courses 1, 2, 3
@@ -141,20 +151,9 @@ class DatabaseSeeder extends Seeder
             ['id' => 5, 'experience_id' => 2, 'course_id' => 5, 'sequence' => 2],
         ]);
 
-        DB::table('experiences')->insertOrIgnore([
-            'id' => 3,
-            'school_id' => 1,
-            'name' => 'Creative Problem Solving',
-            'description' => 'Design thinking and creative approaches to real-world challenges',
-            'status' => 'draft',
-            'created_by' => 3,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Creative Problem Solving has courses 1, 5
+        // Creative Problem Solving has courses 2, 5
         DB::table('experience_courses')->insertOrIgnore([
-            ['id' => 6, 'experience_id' => 3, 'course_id' => 1, 'sequence' => 1],
+            ['id' => 6, 'experience_id' => 3, 'course_id' => 2, 'sequence' => 1],
             ['id' => 7, 'experience_id' => 3, 'course_id' => 5, 'sequence' => 2],
         ]);
 

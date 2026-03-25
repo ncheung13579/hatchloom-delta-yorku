@@ -130,7 +130,7 @@ class DatabaseSeeder extends Seeder
                 'id' => 3,
                 'school_id' => 1,
                 'name' => 'Creative Problem Solving',
-                'description' => 'Design thinking and creative approaches',
+                'description' => 'Design thinking and collaborative problem-solving workshops',
                 'status' => 'draft',
                 'created_by' => 3,
                 'created_at' => now(),
@@ -181,27 +181,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'id' => 4,
-                'experience_id' => 2,
+                'experience_id' => 1,
                 'school_id' => 1,
                 'name' => 'Cohort D',
                 'status' => 'completed',
                 'teacher_id' => 3,
-                'capacity' => 18,
+                'capacity' => 20,
                 'start_date' => '2025-09-01',
                 'end_date' => '2025-12-15',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'id' => 5,
-                'experience_id' => 3,
-                'school_id' => 1,
-                'name' => 'Cohort E',
-                'status' => 'not_started',
-                'teacher_id' => 2,
-                'capacity' => 20,
-                'start_date' => '2026-09-01',
-                'end_date' => '2027-01-15',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -226,32 +213,26 @@ class DatabaseSeeder extends Seeder
                 'enrolled_at' => now(),
             ]);
         }
-        // Students 9-10 (user_ids 12-13) are not assigned
-
-        // Enrol students 3-4 (user_ids 6-7) in Cohort B — demonstrates students in multiple cohorts
-        for ($i = 3; $i <= 4; $i++) {
-            DB::table('cohort_enrolments')->insertOrIgnore([
-                'cohort_id' => 2,
-                'student_id' => $i + 3,
-                'status' => 'enrolled',
-                'enrolled_at' => now(),
-            ]);
-        }
-
-        // Cohort D (completed): student 5 completed, student 6 was removed
+        // Cross-cohort: Student 3 (user_id 6) also in Cohort C — demonstrates
+        // students appearing in multiple cohorts across different experiences
         DB::table('cohort_enrolments')->insertOrIgnore([
-            'cohort_id' => 4,
-            'student_id' => 8,
+            'cohort_id' => 3,
+            'student_id' => 6,
             'status' => 'enrolled',
             'enrolled_at' => now(),
         ]);
-        DB::table('cohort_enrolments')->insertOrIgnore([
-            'cohort_id' => 4,
-            'student_id' => 9,
-            'status' => 'removed',
-            'enrolled_at' => now(),
-            'removed_at' => now(),
-        ]);
+
+        // Cohort D (completed) — students 1-4 (user_ids 4-7) completed this cohort
+        for ($i = 1; $i <= 4; $i++) {
+            DB::table('cohort_enrolments')->insertOrIgnore([
+                'cohort_id' => 4,
+                'student_id' => $i + 3,
+                'status' => 'enrolled',
+                'enrolled_at' => now()->subMonths(4),
+            ]);
+        }
+
+        // Students 9-10 (user_ids 12-13) are not assigned
 
         // Reset PostgreSQL sequences so the next INSERT uses the correct ID.
         // Without this, the first create after seeding fails with a duplicate
