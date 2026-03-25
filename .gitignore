@@ -28,9 +28,10 @@ Thumbs.db
 # Composer downloaded during Docker builds
 **/composer.phar
 
-# Frontend scaffolding (not used — API-only services)
+# Frontend scaffolding (not used — API-only backend services)
 **/vite.config.js
 **/package.json
+!frontend/package.json
 **/resources/css/
 **/resources/js/
 **/resources/views/welcome.blade.php
