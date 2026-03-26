@@ -9,6 +9,8 @@ interface AuthState {
   logout: () => void;
   isAdmin: boolean;
   isTeacher: boolean;
+  isParent: boolean;
+  isStudent: boolean;
 }
 
 const TOKEN_USER_MAP: Record<string, User> = {
@@ -25,6 +27,22 @@ const TOKEN_USER_MAP: Record<string, User> = {
     name: 'Mr. Chen',
     email: 'chen@ridgewood.edu',
     role: 'school_teacher',
+    school_id: 1,
+    school_name: 'Ridgewood Academy',
+  },
+  'test-student-token': {
+    id: 4,
+    name: 'Alex Johnson',
+    email: 'alex.johnson@ridgewood.edu',
+    role: 'student',
+    school_id: 1,
+    school_name: 'Ridgewood Academy',
+  },
+  'test-parent-token': {
+    id: 14,
+    name: 'Mrs. Johnson',
+    email: 'parent.johnson@email.com',
+    role: 'parent',
     school_id: 1,
     school_name: 'Ridgewood Academy',
   },
@@ -85,6 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     isAdmin: user?.role === 'school_admin',
     isTeacher: user?.role === 'school_teacher',
+    isParent: user?.role === 'parent',
+    isStudent: user?.role === 'student',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

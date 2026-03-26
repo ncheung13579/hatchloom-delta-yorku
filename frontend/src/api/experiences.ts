@@ -30,6 +30,14 @@ export async function deleteExperience(id: number): Promise<void> {
   await client.delete(`/school/experiences/${id}`);
 }
 
+export async function updateExperience(
+  id: number,
+  body: { name?: string; description?: string; course_ids?: number[] }
+): Promise<Experience> {
+  const { data } = await client.put<Experience>(`/school/experiences/${id}`, body);
+  return data;
+}
+
 export async function getExperienceStudents(
   experienceId: number,
   page = 1,

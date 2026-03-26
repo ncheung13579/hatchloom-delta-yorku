@@ -47,6 +47,16 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    to: '/admin/reporting',
+    label: 'Reporting',
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
+      </svg>
+    ),
+  },
 ];
 
 const bottomItems = [
@@ -62,13 +72,15 @@ const bottomItems = [
   },
 ];
 
-function TopNav({ user }: { user: { name: string; email?: string } }) {
+function TopNav({ user }: { user: { name: string; email?: string; role?: string; school_name?: string } }) {
   const initials = user.name
     .split(' ')
     .map((w) => w[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
+
+  const roleLabel = user.role === 'school_teacher' ? 'Teacher' : 'School Admin';
 
   return (
     <nav className="sticky top-0 z-50 h-[58px] bg-card border-b-[1.5px] border-border flex items-center justify-between px-6">
@@ -77,10 +89,10 @@ function TopNav({ user }: { user: { name: string; email?: string } }) {
           hatch<span className="text-primary">loom</span>
         </a>
         <div className="bg-gradient-to-br from-[#EEF2FF] to-[#E0E7FF] text-[#4338CA] text-[0.78rem] font-semibold px-3 py-1 rounded-full tracking-wide">
-          School Admin
+          {roleLabel}
         </div>
         <div className="font-[family-name:var(--font-display)] font-semibold text-[0.92rem] text-charcoal">
-          Ridgewood Academy
+          {user.school_name ?? 'Ridgewood Academy'}
         </div>
       </div>
       <div className="flex items-center gap-3.5">

@@ -63,3 +63,8 @@ export async function exportEnrolments(): Promise<Blob> {
   });
   return response.data;
 }
+
+export async function getStudentDetail(studentId: number) {
+  const { data } = await client.get(`/school/enrolments/students/${studentId}`);
+  return data;
+}
