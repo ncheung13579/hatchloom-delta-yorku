@@ -7,17 +7,18 @@ This guide prepares you to demo the Hatchloom School Administration module and a
 ## Table of Contents
 
 1. [What We Built](#1-what-we-built)
-2. [How to Run It](#2-how-to-run-it)
-3. [Architecture at a Glance](#3-architecture-at-a-glance)
-4. [Login and Roles](#4-login-and-roles)
-5. [Demo Walkthrough: Teacher Flow](#5-demo-walkthrough-teacher-flow)
-6. [Demo Walkthrough: Admin Flow](#6-demo-walkthrough-admin-flow)
-7. [Demo Walkthrough: Student and Parent](#7-demo-walkthrough-student-and-parent)
-8. [Design Patterns (6 Patterns)](#8-design-patterns-6-patterns)
-9. [Cross-Team Dependencies and Mock Providers](#9-cross-team-dependencies-and-mock-providers)
-10. [API Endpoint Reference](#10-api-endpoint-reference)
-11. [Anticipated Questions and Answers](#11-anticipated-questions-and-answers)
-12. [Demo Script Cheat Sheet](#12-demo-script-cheat-sheet)
+2. [The Bigger Picture: Hatchloom Platform](#2-the-bigger-picture-hatchloom-platform)
+3. [How to Run It](#3-how-to-run-it)
+4. [Architecture at a Glance](#4-architecture-at-a-glance)
+5. [Login and Roles](#5-login-and-roles)
+6. [Demo Walkthrough: Teacher Flow](#6-demo-walkthrough-teacher-flow)
+7. [Demo Walkthrough: Admin Flow](#7-demo-walkthrough-admin-flow)
+8. [Demo Walkthrough: Student and Parent](#8-demo-walkthrough-student-and-parent)
+9. [Design Patterns (6 Patterns)](#9-design-patterns-6-patterns)
+10. [Cross-Team Dependencies and Mock Providers](#10-cross-team-dependencies-and-mock-providers)
+11. [API Endpoint Reference](#11-api-endpoint-reference)
+12. [Anticipated Questions and Answers](#12-anticipated-questions-and-answers)
+13. [Demo Script Cheat Sheet](#13-demo-script-cheat-sheet)
 
 ---
 
@@ -36,7 +37,123 @@ The system is three Laravel microservices + a React frontend, all running in Doc
 
 ---
 
-## 2. How to Run It
+## 2. The Bigger Picture: Hatchloom Platform
+
+Before diving into our code, you should understand what Hatchloom is and where Delta fits. This context will help you answer "big picture" questions during the demo.
+
+### What is Hatchloom?
+
+Hatchloom is a **youth entrepreneurship learning platform**. Think of it as a school LMS (like Google Classroom) combined with a startup incubator for high school students. Students don't just take courses — they build simulated businesses, compete in challenges with real entrepreneurs, and earn credentials mapped to the Alberta curriculum.
+
+The platform has **three pillars**:
+
+### Pillar 1: Explore (Team Papa)
+
+**Explore** is the core learning engine. This is where students take courses.
+
+- **Courses** contain **Blocks**, which contain **Nodes**, which contain **Activity Cards** — a 4-level hierarchy
+- There are **10 activity card types**: Watch Video, Read Document, Complete Quiz, Answer Question, Vote/Poll, Live Session, Social Activity, Explore Gallery, Listen to Podcast, Submit Solution
+- **Challenges** are special learning events with a lifecycle: they get revealed, students work on them, submit solutions, and present on pitch day. Challenges are often linked to real entrepreneurs (e.g., a local business owner named Sarah Chen from BrandLab Calgary poses a real business problem)
+- **Gamification**: Students earn **XP** (experience points) and maintain **streaks** (consecutive days of activity). These are tracked by Papa's service and surfaced on Romeo's student dashboard
+- **Milestones**: Upcoming deadlines like challenge reveals, submission due dates, and pitch days are aggregated into a feed on the student's home screen
+- **Progress tracking**: Papa tracks which blocks, nodes, and cards a student has completed, and calculates completion percentages. This is the data our `MockStudentProgressProvider` simulates
+
+**Where Delta touches Explore:** Our Experience service groups Papa's courses into "Experiences" (curated programs a school assembles). When a school admin views the dashboard, the "Problems Tackled" metric and "Credit Progress" come from Papa's progress data. Our student drill-down shows per-course completion bars — that data comes from Papa in production.
+
+### Pillar 2: LaunchPad (Team Quebec)
+
+**LaunchPad** is the startup incubator. This is where students build businesses.
+
+- **Sandbox**: A workspace for early-stage experimentation. Students brainstorm ideas, use simplified tools, and prototype concepts. The student dashboard shows "In the Lab" counts for sandbox projects.
+- **SideHustle**: A more structured simulated business. Students create a SideHustle, build a **BMC (Business Model Canvas)** with the 9 standard sections (Key Partners, Key Activities, Value Propositions, Customer Segments, etc.), form **Teams**, and post **Open Positions** to recruit other students.
+- **"Active Ventures"**: On our dashboard, the "Active Ventures: 7" KPI card counts how many SideHustle projects are currently active at the school. This comes from `MockLaunchPadDataProvider.countActiveVentures()`.
+- **Student ventures**: On the student drill-down page, the "LaunchPad Ventures" section shows a student's individual SideHustle projects (e.g., "Campus Snack Box" — active, "Study Buddy Tutoring" — completed). This comes from `MockLaunchPadDataProvider.getStudentVentures()`.
+
+**Where Delta touches LaunchPad:** We display LaunchPad summary data on the school dashboard (venture counts) and the student drill-down (individual venture details). In production, our Dashboard Service would call Quebec's LaunchPad API. Right now, our mock returns realistic sample data.
+
+### Pillar 3: ConnectHub (Team Quebec)
+
+**ConnectHub** is the social and collaboration layer.
+
+- **Feed**: Students share achievements (e.g., winning Entrepreneur's Choice Award), post announcements, and see classmate activity
+- **Classifieds**: SideHustle teams post open positions (e.g., "Looking for a marketing lead for Campus Snack Box"). Other students can browse and apply. Positions are marked OPEN or FILLED.
+- **Messaging**: Direct messaging between students and instructors, with context linking (messages can be about a specific course, challenge, or SideHustle)
+
+**Where Delta touches ConnectHub:** We don't directly consume ConnectHub data. It's primarily student-to-student. However, school admins might eventually see ConnectHub activity in engagement metrics.
+
+### The Golden Path
+
+The "Golden Path" is the scripted demo flow that Ejaaj (Role C) is responsible for. It follows a student named **Alex** through a complete journey:
+
+1. Alex logs in, sees the Student Home (streaks, XP, active courses, upcoming milestones)
+2. Alex opens a course (Design Thinking 101), works through blocks and activity cards
+3. A challenge is revealed — a real entrepreneur poses a business problem
+4. Alex submits a solution, votes on other students' solutions, attends pitch day
+5. Alex wins the Entrepreneur's Choice Award, shares it on ConnectHub
+6. Alex's credential appears in the Credential Wallet
+7. Alex's school admin sees the updated dashboard metrics
+8. Alex's parent sees the achievement on the Parent Dashboard
+
+**Team Delta powers steps 7 and 8** — the school admin and parent views. The student-facing steps (1-6) are Team Romeo (dashboards), Team Papa (courses/challenges), and Team Quebec (auth, ConnectHub, LaunchPad).
+
+### Curriculum Mapping — Alberta Program of Studies
+
+Hatchloom courses map to Alberta high school curriculum requirements. There are three areas:
+
+- **Business Studies** — e.g., "Identify business opportunities" (BS-1.1), "Develop a business plan" (BS-2.1)
+- **CTF Design Studies** (Career and Technology Foundations) — e.g., "Apply design thinking process" (CTF-1.1), "Use digital tools for prototyping" (CTF-2.1)
+- **CALM** (Career and Life Management) — e.g., "Set personal and financial goals" (CALM-1.1), "Manage personal finances" (CALM-2.1)
+
+Karl's database schema defines the `CurriculumMapping` model that links Hatchloom activities to these standards. Our student drill-down page shows coverage per area with progress bars and individual requirement codes. The school reporting page shows school-wide averages.
+
+**If asked about curriculum mapping:** "Each Hatchloom course covers certain Alberta PoS requirements. Karl's credential engine tracks which requirements a student has met through their coursework. We display that mapping on the student drill-down and the reporting page — showing, for example, that Alex has met 3 of 8 Business Studies requirements through Intro to Entrepreneurship and Marketing Basics."
+
+### Credentials, Badges, and Certificates
+
+Students earn three types of achievements:
+
+- **Credentials**: Formal recognitions tied to course completion (e.g., "Entrepreneurial Thinking Foundations")
+- **Badges**: Special achievements like "Entrepreneur's Choice Award" — often tied to challenges
+- **Certificates**: Course or program completion certificates (e.g., "Financial Literacy Completion")
+
+Karl's credential engine manages the earning logic. Team Romeo displays them in the Credential Wallet (Screen 901). Team Delta displays them on the student drill-down page and the school reporting page.
+
+### Team and Role Summary
+
+| Team/Role | People | What they own | Screens |
+|-----------|--------|--------------|---------|
+| **Delta** (us) | Your team | School admin module — experiences, cohorts, enrolments, dashboard | 300, 301, 302, 303 |
+| **Papa** | Salam, Alice, Efua, Mahdis | Explore pillar — courses, challenges, activity cards, progress | 000, 020 |
+| **Quebec** | Andrew, Anthony, Daniel, Ronald | Auth, LaunchPad (Sandbox, SideHustle), ConnectHub (feed, classifieds, messaging) | 100, 200 |
+| **Romeo** | Jahiem, Tharuk, Jefferson, Huzaifa | Student-facing dashboards, credential wallet, parent dashboard | 999, 900, 901, 400 |
+| **Matt** (Role A) | Architecture lead | Tech stack, API gateway, cross-service patterns, supervises Papa | — |
+| **Karl** (Role B) | Database lead | DB schema, credential engine, security, GitHub/Discord setup, supervises Quebec | — |
+| **Ejaaj** (Role C) | Golden Path lead | End-to-end demo simulation, supervises Romeo | — |
+| **Eva** | CEO | All leads report to her | — |
+
+### How the teams connect
+
+```
+ Papa (Courses, Progress)          Quebec (Auth, LaunchPad, ConnectHub)
+       │                                    │
+       │  course data, progress             │  auth tokens, venture data
+       ▼                                    ▼
+ ┌─────────────────────────────────────────────────┐
+ │              Team Delta (Us)                     │
+ │   Dashboard ◄── Experience ◄── Enrolment         │
+ │   Aggregates everything into school admin views  │
+ └─────────────────────────────────────────────────┘
+       │                                    │
+       │  dashboard data                    │  credential data
+       ▼                                    ▼
+ Romeo (Student Dashboards)        Karl (Credential Engine, DB Schema)
+```
+
+Delta sits in the middle — we aggregate upstream data from Papa and Quebec, and Romeo consumes our API for school-level views. Karl's credential engine provides the data that powers curriculum mapping and credential displays across both Delta and Romeo.
+
+---
+
+## 3. How to Run It
 
 ### Prerequisites
 
@@ -81,7 +198,7 @@ docker compose logs dashboard-service
 
 ---
 
-## 3. Architecture at a Glance
+## 4. Architecture at a Glance
 
 ```
                     ┌─────────────────────┐
@@ -119,7 +236,7 @@ docker compose logs dashboard-service
 
 ---
 
-## 4. Login and Roles
+## 5. Login and Roles
 
 Go to http://localhost:3000. You'll see four role buttons.
 
@@ -140,11 +257,11 @@ This matches our backend role checks. The backend returns 403 if an admin tries 
 
 ---
 
-## 5. Demo Walkthrough: Teacher Flow
+## 6. Demo Walkthrough: Teacher Flow
 
 Login as **Teacher** (Mr. Chen). This is the most feature-rich role and should be the primary demo.
 
-### 5.1 Dashboard (Screen 300)
+### 6.1 Dashboard (Screen 300)
 
 **URL:** `/admin/dashboard`
 
@@ -160,7 +277,7 @@ What you'll see:
 - Click any student row's arrow (>) to drill down into their detail page
 - The warning is dynamically computed — if you enrol all students into cohorts, it disappears
 
-### 5.2 Experiences (Screen 301)
+### 6.2 Experiences (Screen 301)
 
 **URL:** `/admin/experiences`
 
@@ -174,7 +291,7 @@ What you'll see:
 2. **Create Experience**: Click the button, fill in name/description, select courses from the checkbox list, submit. The new experience appears in the table.
 3. **Navigate**: Click any experience row to go to the detail page
 
-### 5.3 Experience Detail (Screen 302)
+### 6.3 Experience Detail (Screen 302)
 
 **URL:** `/admin/experiences/{id}` (click any experience)
 
@@ -192,7 +309,7 @@ What you'll see:
 3. **Export**: Click Export button to download a CSV of enrolled students
 4. **Drill down**: Click a student row to see their individual progress, credentials, and curriculum mapping
 
-### 5.4 Cohort Detail
+### 6.4 Cohort Detail
 
 **URL:** `/admin/cohorts/{id}` (click any cohort)
 
@@ -215,7 +332,7 @@ What you'll see:
 2. The student appears in the table immediately
 3. Navigate to Enrolments page to see the student's new cohort assignment
 
-### 5.5 Enrolment (Screen 303)
+### 6.5 Enrolment (Screen 303)
 
 **URL:** `/admin/enrolments`
 
@@ -231,7 +348,7 @@ What you'll see:
 3. **Search**: Type a student name
 4. **Export**: Click Export for CSV download
 
-### 5.6 Student Drill-Down
+### 6.6 Student Drill-Down
 
 **URL:** `/admin/students/{id}` (click any student arrow)
 
@@ -250,7 +367,7 @@ What you'll see:
 - Progress data comes from Papa's course service mock provider
 - All of these are wired via the **Strategy pattern** — swap one line in `AppServiceProvider` to use real data
 
-### 5.7 Reporting / Curriculum
+### 6.7 Reporting / Curriculum
 
 **URL:** `/admin/curriculum`
 
@@ -261,7 +378,7 @@ What you'll see:
 
 ---
 
-## 6. Demo Walkthrough: Admin Flow
+## 7. Demo Walkthrough: Admin Flow
 
 Login as **School Admin** (Ms. Patel).
 
@@ -275,7 +392,7 @@ This demonstrates **role-based access control**. The backend enforces it (return
 
 ---
 
-## 7. Demo Walkthrough: Student and Parent
+## 8. Demo Walkthrough: Student and Parent
 
 ### Student (Alex Johnson)
 
@@ -296,11 +413,11 @@ This demonstrates **role-based access control**. The backend enforces it (return
 
 ---
 
-## 8. Design Patterns (6 Patterns)
+## 9. Design Patterns (6 Patterns)
 
 The workpack requires a minimum of 6 design patterns by D3. Here's where each one lives:
 
-### 8.1 Strategy Pattern
+### 9.1 Strategy Pattern
 
 **Where:** All three services
 
@@ -317,7 +434,7 @@ The system uses **interfaces** for external data sources. Mock implementations a
 
 **If asked "how would you switch to real data?"** — "Change the binding in AppServiceProvider from MockCourseDataProvider to a new HttpCourseDataProvider that calls Papa's API. No other code changes needed. That's the Strategy pattern."
 
-### 8.2 Factory Method Pattern
+### 9.2 Factory Method Pattern
 
 **Where:** `dashboard-service/app/Factories/DashboardWidgetFactory.php`
 
@@ -327,7 +444,7 @@ The dashboard has **widgets** (cohort_summary, student_table, engagement_chart).
 
 **If asked:** "The factory encapsulates widget creation. Controllers don't know about specific widget classes — they ask the factory for a type and get back a `DashboardWidget` interface."
 
-### 8.3 State Pattern
+### 9.3 State Pattern
 
 **Where:** `enrolment-service/app/States/`
 
@@ -341,7 +458,7 @@ Cohorts have a lifecycle: `not_started` -> `active` -> `completed`. Each state i
 
 **If asked:** "The State pattern encapsulates transition rules. The controller doesn't have if/else chains checking status strings — it delegates to the state object."
 
-### 8.4 Observer Pattern (Events and Listeners)
+### 9.4 Observer Pattern (Events and Listeners)
 
 **Where:** `enrolment-service/app/Events/` and `enrolment-service/app/Listeners/`
 
@@ -354,7 +471,7 @@ When a student is enrolled or removed, events are dispatched:
 
 **If asked:** "When `enrolStudent()` runs, it doesn't directly update dashboard counts or send notifications. It fires a `StudentEnrolled` event. Three independent listeners react to it. This decoupling means we can add new side effects (like sending an email) without modifying the enrolment code."
 
-### 8.5 Repository Pattern
+### 9.5 Repository Pattern
 
 **Where:** `dashboard-service/app/Services/DashboardService.php`
 
@@ -362,7 +479,7 @@ The `DashboardService` is the repository boundary between controllers and all da
 
 **If asked:** "The DashboardService abstracts away whether data comes from an HTTP call, a database query, or a mock provider. The controller doesn't know or care."
 
-### 8.6 Dependency Injection (via Laravel Container)
+### 9.6 Dependency Injection (via Laravel Container)
 
 **Where:** Everywhere, but especially `AppServiceProvider.php` in each service
 
@@ -382,7 +499,7 @@ public function __construct(
 
 ---
 
-## 9. Cross-Team Dependencies and Mock Providers
+## 10. Cross-Team Dependencies and Mock Providers
 
 Our services aggregate data from other teams. Since those teams' services don't exist yet, we use mock providers:
 
@@ -409,7 +526,7 @@ No other code changes needed anywhere.
 
 ---
 
-## 10. API Endpoint Reference
+## 11. API Endpoint Reference
 
 ### Dashboard Service (Port 8001)
 
@@ -457,7 +574,7 @@ No other code changes needed anywhere.
 
 ---
 
-## 11. Anticipated Questions and Answers
+## 12. Anticipated Questions and Answers
 
 ### Architecture
 
@@ -506,6 +623,32 @@ A: Those are SideHustle sandbox projects from Quebec's LaunchPad Service. Studen
 **Q: How does the export work?**
 A: The Experience and Enrolment services have `/export` endpoints that return CSV files. The frontend creates a temporary blob URL, triggers a download via a programmatic `<a>` click, then revokes the URL.
 
+### Broader Platform / Other Teams
+
+**Q: What is gamification in Hatchloom?**
+A: Gamification is handled by Team Papa's Explore service. Students earn XP (experience points) for completing activity cards and maintaining daily streaks. Challenges add a competitive element — students submit solutions to real business problems posed by entrepreneurs, vote on each other's work, and compete for awards like the Entrepreneur's Choice. These game mechanics drive engagement. We display the downstream effects on our dashboard — "Problems Tackled" counts completed challenges, and engagement metrics show activity levels.
+
+**Q: What is LaunchPad?**
+A: LaunchPad is Quebec's startup incubator pillar. It has two main components: Sandbox (a workspace for early idea experimentation) and SideHustle (a structured simulated business). Students create SideHustles, build a Business Model Canvas with 9 standard sections, form teams, and post open positions. On our dashboard, "Active Ventures: 7" counts active SideHustles at the school. On the student drill-down, we show each student's individual ventures. All LaunchPad data comes from Quebec's service — we consume it via our mock provider.
+
+**Q: What is ConnectHub?**
+A: ConnectHub is Quebec's social and collaboration pillar. It includes a feed (where students share achievements and announcements), classifieds (where SideHustle teams post open positions that other students can browse), and messaging. Delta doesn't directly consume ConnectHub data, but it's part of the overall platform experience.
+
+**Q: What is the Business Model Canvas (BMC)?**
+A: The BMC is a standard business planning tool with 9 sections: Key Partners, Key Activities, Key Resources, Value Propositions, Customer Relationships, Channels, Customer Segments, Cost Structure, and Revenue Streams. In Hatchloom, each SideHustle has its own BMC that students edit collaboratively. This is built and managed by Quebec's LaunchPad service.
+
+**Q: What are the 10 activity card types?**
+A: These are the learning content types in Papa's Explore pillar: Watch Video, Read Document, Complete Quiz, Answer Question, Vote/Poll, Live Session, Social Activity, Explore Gallery, Listen to Podcast, and Submit Solution. Each type has a different content model (e.g., Quiz has a questions array with scoring; Video has URL, duration, and transcript). Students work through these cards within course blocks.
+
+**Q: What does Team Romeo do?**
+A: Romeo builds the student-facing dashboards and reporting. They own the Student Home (Screen 999) showing streaks, XP, and active courses; the Student Profile (Screen 900); the Credential Wallet (Screen 901) where earned badges and certificates are displayed; and the Parent Dashboard (Screen 400). Romeo consumes our API for school-level data but we don't depend on them.
+
+**Q: What does the Golden Path demo show?**
+A: The Golden Path follows a student named Alex through a complete journey — from logging in, taking a course, competing in a challenge with a real entrepreneur, winning an award, all the way to the school admin seeing updated metrics and the parent seeing the achievement. Team Delta powers the school admin and parent views at the end of that journey.
+
+**Q: How does the Alberta PoS curriculum mapping work?**
+A: Hatchloom courses are mapped to Alberta high school curriculum requirements across three areas: Business Studies, CTF Design Studies (Career and Technology Foundations), and CALM (Career and Life Management). Karl's credential engine defines which course activities meet which requirements. When a student completes relevant coursework, the mapping updates. We display this on the student drill-down (per-student coverage with progress bars) and the reporting page (school-wide averages).
+
 ### Testing
 
 **Q: How did you test this?**
@@ -513,7 +656,7 @@ A: We have unit tests in each Laravel service (run with `php artisan test`), plu
 
 ---
 
-## 12. Demo Script Cheat Sheet
+## 13. Demo Script Cheat Sheet
 
 Use this as a quick reference during the live demo. Each step takes ~30 seconds.
 
