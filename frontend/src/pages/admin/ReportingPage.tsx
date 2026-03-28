@@ -43,7 +43,7 @@ export default function ReportingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[1.65rem] font-bold text-charcoal mb-1">Reporting</h1>
+        <h1 className="text-[1.65rem] font-bold text-charcoal mb-1">Curriculum Alignment</h1>
         <p className="text-[0.92rem] text-soft">Alberta PoS curriculum coverage and student engagement metrics</p>
       </div>
 

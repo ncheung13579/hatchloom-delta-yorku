@@ -47,19 +47,18 @@ const navItems = [
       </svg>
     ),
   },
-  {
-    to: '/admin/reporting',
-    label: 'Reporting',
-    icon: (
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
-      </svg>
-    ),
-  },
 ];
 
 const bottomItems = [
+  {
+    to: '/admin/billing',
+    label: 'Plan & Billing',
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+      </svg>
+    ),
+  },
   {
     to: '/admin/settings',
     label: 'Settings',
@@ -70,9 +69,18 @@ const bottomItems = [
       </svg>
     ),
   },
+  {
+    to: '/admin/contact',
+    label: 'Contact Hatchloom',
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+      </svg>
+    ),
+  },
 ];
 
-function TopNav({ user }: { user: { name: string; email?: string; role?: string; school_name?: string } }) {
+function TopNav({ user, logout }: { user: { name: string; email?: string; role?: string; school_name?: string }; logout: () => void }) {
   const initials = user.name
     .split(' ')
     .map((w) => w[0])
@@ -113,6 +121,16 @@ function TopNav({ user }: { user: { name: string; email?: string; role?: string;
           </div>
           <span className="text-[0.85rem] font-semibold text-charcoal">{user.name}</span>
         </div>
+        <button
+          onClick={logout}
+          className="flex items-center gap-1.5 px-3.5 py-[7px] bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-xl
+            font-[family-name:var(--font-body)] text-[0.82rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,31,90,0.25)]"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+          Sign Out
+        </button>
       </div>
     </nav>
   );
@@ -147,7 +165,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen">
-      <TopNav user={user} />
+      <TopNav user={user} logout={logout} />
       <div className="flex" style={{ minHeight: 'calc(100vh - 58px)' }}>
         {/* Sidebar */}
         <aside className="w-[215px] flex-shrink-0 bg-card border-r-[1.5px] border-border sticky top-[58px] flex flex-col py-4 overflow-y-auto" style={{ height: 'calc(100vh - 58px)' }}>
@@ -155,34 +173,37 @@ export default function AdminLayout() {
             Ridgewood Academy
           </div>
 
-          <nav className="flex-1">
+          <nav>
             {navItems.map((item) => (
               <SidebarLink key={item.to} {...item} />
             ))}
           </nav>
 
-          <div className="h-px bg-border mx-5 my-2" />
+          <div className="flex-1 min-h-6" />
 
           <div className="font-[family-name:var(--font-display)] font-bold text-[0.72rem] text-soft uppercase tracking-wider px-5 py-3 pb-1.5">
             Account
           </div>
 
-          {bottomItems.map((item) => (
-            <SidebarLink key={item.to} {...item} />
-          ))}
+          <SidebarLink to="/admin/billing" label="Plan & Billing" icon={bottomItems[0].icon} />
+
+          <div className="h-px bg-border mx-5 my-2" />
+
+          <SidebarLink to="/admin/settings" label="Settings" icon={bottomItems[1].icon} />
 
           <button
-            onClick={logout}
+            onClick={() => { window.location.href = '/admin/contact'; }}
             className="mx-4 mt-2 p-2.5 bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-xl
               font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer text-center
               transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,31,90,0.25)]
               flex items-center justify-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
             </svg>
-            Sign Out
+            Contact Hatchloom
           </button>
+
         </aside>
 
         {/* Main content */}

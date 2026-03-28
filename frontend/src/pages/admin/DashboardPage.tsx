@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { getDashboard } from '../../api/dashboard';
+import { getDashboard, getWidgets, getWidget } from '../../api/dashboard';
 import MetricCard from '../../components/ui/MetricCard';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
@@ -18,11 +18,33 @@ function statusPillClass(status: string): string {
   }
 }
 
+function EngagementBadge({ level }: { level: string }) {
+  const cls = level === 'excellent' ? 'bg-success/10 text-[#16A34A]'
+    : level === 'good' ? 'bg-teal/10 text-teal'
+    : level === 'moderate' ? 'bg-warning/10 text-[#B45309]'
+    : 'bg-danger/10 text-danger';
+  return (
+    <span className={`text-[0.78rem] font-semibold px-2.5 py-1 rounded-full inline-block ${cls}`}>
+      {level.charAt(0).toUpperCase() + level.slice(1)}
+    </span>
+  );
+}
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'students' | 'cohorts'>('students');
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
     queryFn: getDashboard,
+  });
+
+  const { data: widgetsResponse } = useQuery({
+    queryKey: ['widgets'],
+    queryFn: getWidgets,
+  });
+
+  const { data: engagementWidget } = useQuery({
+    queryKey: ['widget', 'engagement_chart'],
+    queryFn: () => getWidget('engagement_chart'),
   });
 
   if (isLoading) return <Spinner className="py-24" />;
@@ -122,36 +144,95 @@ export default function DashboardPage() {
         </div>
         <div className="h-px bg-border" />
 
-        {/* Students tab — summary cards (dashboard endpoint returns aggregate counts, not individual records) */}
-        {activeTab === 'students' && (
-          <div className="p-6">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="rounded-[14px] border-[1.5px] border-border bg-bg p-5">
-                <div className="text-[0.82rem] text-soft font-semibold uppercase tracking-wider mb-2">Total Enrolled</div>
-                <div className="text-[1.8rem] font-bold text-charcoal leading-tight">{students.total_enrolled}</div>
-                <div className="text-[0.82rem] text-soft mt-1">students across all cohorts</div>
+        {/* Students tab — summary + student table from widgets API */}
+        {activeTab === 'students' && (() => {
+          const widgetsList = ((widgetsResponse as Record<string, unknown>)?.widgets ?? []) as Array<Record<string, unknown>>;
+          const studentTableWidget = widgetsList.find(w => w.type === 'student_table');
+          const widgetStudents = ((studentTableWidget?.data as Record<string, unknown>)?.students ?? []) as Array<Record<string, unknown>>;
+
+          return (
+            <div>
+              <div className="p-6">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="rounded-[14px] border-[1.5px] border-border bg-bg p-5">
+                    <div className="text-[0.82rem] text-soft font-semibold uppercase tracking-wider mb-2">Total Enrolled</div>
+                    <div className="text-[1.8rem] font-bold text-charcoal leading-tight">{students.total_enrolled}</div>
+                    <div className="text-[0.82rem] text-soft mt-1">students across all cohorts</div>
+                  </div>
+                  <div className="rounded-[14px] border-[1.5px] border-border bg-bg p-5">
+                    <div className="text-[0.82rem] text-soft font-semibold uppercase tracking-wider mb-2">Active in Cohorts</div>
+                    <div className="text-[1.8rem] font-bold text-teal leading-tight">{students.active_in_cohorts}</div>
+                    <div className="text-[0.82rem] text-soft mt-1">currently participating</div>
+                  </div>
+                  <div className="rounded-[14px] border-[1.5px] border-border bg-bg p-5">
+                    <div className="text-[0.82rem] text-soft font-semibold uppercase tracking-wider mb-2">Not Assigned</div>
+                    <div className="text-[1.8rem] font-bold text-charcoal leading-tight">{students.not_assigned}</div>
+                    <div className="text-[0.82rem] text-soft mt-1">awaiting cohort placement</div>
+                  </div>
+                </div>
               </div>
-              <div className="rounded-[14px] border-[1.5px] border-border bg-bg p-5">
-                <div className="text-[0.82rem] text-soft font-semibold uppercase tracking-wider mb-2">Active in Cohorts</div>
-                <div className="text-[1.8rem] font-bold text-teal leading-tight">{students.active_in_cohorts}</div>
-                <div className="text-[0.82rem] text-soft mt-1">currently participating</div>
-              </div>
-              <div className="rounded-[14px] border-[1.5px] border-border bg-bg p-5">
-                <div className="text-[0.82rem] text-soft font-semibold uppercase tracking-wider mb-2">Not Assigned</div>
-                <div className="text-[1.8rem] font-bold text-charcoal leading-tight">{students.not_assigned}</div>
-                <div className="text-[0.82rem] text-soft mt-1">awaiting cohort placement</div>
+
+              {widgetStudents.length > 0 && (
+                <>
+                  <div className="h-px bg-border" />
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Student</th>
+                        <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Status</th>
+                        <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Cohorts</th>
+                        <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Email</th>
+                        <th className="text-left px-5 py-3 bg-bg border-b-[1.5px] border-border" style={{ width: '4%' }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {widgetStudents.map((s, i) => (
+                        <tr key={i} className="transition-colors hover:bg-[#FAFBFE] cursor-pointer group">
+                          <td className="px-5 py-3.5 border-b border-border">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-[34px] h-[34px] rounded-[10px] bg-gradient-to-br from-teal/20 to-teal flex items-center justify-center text-white font-[family-name:var(--font-display)] font-bold text-[0.7rem] flex-shrink-0">
+                                {((s.name as string) ?? '?').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                              </div>
+                              <div className="font-semibold text-charcoal">{s.name as string}</div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 border-b border-border">
+                            <div className="flex items-center gap-[7px]">
+                              <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                                s.status === 'active' ? 'bg-[#22C55E] shadow-[0_0_0_3px_rgba(34,197,94,0.15)]'
+                                  : s.status === 'inactive' ? 'bg-[#F59E0B] shadow-[0_0_0_3px_rgba(245,158,11,0.15)]'
+                                  : 'bg-border'
+                              }`} />
+                              <span className="text-[0.82rem] text-soft">{(s.status as string ?? '').charAt(0).toUpperCase() + (s.status as string ?? '').slice(1)}</span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 border-b border-border text-[0.9rem]">{String(s.cohort_count ?? 0)}</td>
+                          <td className="px-5 py-3.5 border-b border-border">
+                            <span className="text-teal text-[0.82rem]">{s.email as string}</span>
+                          </td>
+                          <td className="px-5 py-3.5 border-b border-border">
+                            <Link to={`/admin/students/${s.student_id}`} className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline">
+                              &rsaquo;
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              <div className="px-6 py-3 flex justify-end border-t border-border">
+                <Link
+                  to="/admin/enrolments"
+                  className="text-[0.85rem] font-semibold text-primary hover:text-primary/80 transition-colors no-underline"
+                >
+                  View all students &rarr;
+                </Link>
               </div>
             </div>
-            <div className="mt-4 flex justify-end">
-              <Link
-                to="/admin/enrolments"
-                className="text-[0.85rem] font-semibold text-primary hover:text-primary/80 transition-colors no-underline"
-              >
-                View all students &rarr;
-              </Link>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Cohorts tab */}
         {activeTab === 'cohorts' && (
@@ -175,7 +256,9 @@ export default function DashboardPage() {
                     {cohorts.map((cohort) => (
                       <tr key={cohort.id} className="transition-colors hover:bg-[#FAFBFE] cursor-pointer group">
                         <td className="px-5 py-3.5 text-[0.9rem] border-b border-border">
-                          <div className="font-semibold text-charcoal">{cohort.name}</div>
+                          <Link to={`/admin/cohorts/${cohort.id}`} className="font-semibold text-charcoal no-underline hover:text-teal">
+                            {cohort.name}
+                          </Link>
                           <div className="text-[0.8rem] text-soft">{cohort.experience_name}</div>
                         </td>
                         <td className="px-5 py-3.5 border-b border-border">
@@ -189,8 +272,8 @@ export default function DashboardPage() {
                           {cohort.end_date ? new Date(cohort.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}
                         </td>
                         <td className="px-5 py-3.5 border-b border-border">
-                          <Link to={`/admin/experiences/${cohort.experience_id}`} className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline">
-                            ›
+                          <Link to={`/admin/cohorts/${cohort.id}`} className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline">
+                            &rsaquo;
                           </Link>
                         </td>
                       </tr>
@@ -207,6 +290,87 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Engagement widget — uses getWidgets() + getWidget('engagement_chart') */}
+      {(() => {
+        const engWidget = engagementWidget as Record<string, unknown> | undefined;
+        const engData = engWidget?.data as Record<string, unknown> | undefined;
+        const studentMetrics = (engData?.student_metrics ?? []) as Array<Record<string, unknown>>;
+        const averages = engData?.school_averages as Record<string, unknown> | undefined;
+        const distribution = engData?.distribution as Record<string, unknown> | undefined;
+
+        if (!studentMetrics.length) return null;
+
+        return (
+          <div className="bg-card border-[1.5px] border-border rounded-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4">
+              <div className="flex items-center gap-3">
+                <span className="font-[family-name:var(--font-display)] font-semibold text-[0.95rem] text-charcoal">Student Engagement</span>
+                <span className="text-[0.75rem] font-semibold px-2.5 py-0.5 rounded-full bg-bg text-soft">Last 30 days</span>
+              </div>
+              {averages && (
+                <span className="text-[0.82rem] text-soft">
+                  Avg completion: <strong className="text-charcoal">{Math.round(Number(averages.avg_completion_rate ?? 0) * 100)}%</strong>
+                </span>
+              )}
+            </div>
+            {distribution && (
+              <div className="px-6 pb-3 flex gap-3">
+                {(['excellent', 'good', 'moderate', 'low'] as const).map(level => {
+                  const count = Number((distribution as Record<string, unknown>)[level] ?? 0);
+                  if (!count) return null;
+                  return (
+                    <div key={level} className="flex items-center gap-1.5">
+                      <EngagementBadge level={level} />
+                      <span className="text-[0.82rem] text-soft">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="h-px bg-border" />
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Student</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Login Days</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Completion</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Level</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Last Active</th>
+                  <th className="text-left px-5 py-3 bg-bg border-b-[1.5px] border-border" style={{ width: '4%' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {studentMetrics.map((s, i) => (
+                  <tr key={i} className="transition-colors hover:bg-[#FAFBFE] cursor-pointer group">
+                    <td className="px-5 py-3.5 border-b border-border font-semibold text-charcoal">{s.student_name as string}</td>
+                    <td className="px-5 py-3.5 border-b border-border text-[0.9rem]">{String(s.login_days)}</td>
+                    <td className="px-5 py-3.5 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 rounded-full bg-bg overflow-hidden">
+                          <div className="h-full rounded-full bg-teal" style={{ width: `${Math.round(Number(s.completion_rate ?? 0) * 100)}%` }} />
+                        </div>
+                        <span className="text-[0.82rem] text-soft">{Math.round(Number(s.completion_rate ?? 0) * 100)}%</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 border-b border-border">
+                      <EngagementBadge level={s.engagement_level as string} />
+                    </td>
+                    <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">
+                      {s.last_active_at ? new Date(s.last_active_at as string).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="px-5 py-3.5 border-b border-border">
+                      <Link to={`/admin/students/${s.student_id}`} className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline">
+                        &rsaquo;
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
     </div>
   );
 }

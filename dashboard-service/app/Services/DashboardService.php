@@ -292,6 +292,9 @@ class DashboardService
             // (MockCredentialDataProvider currently, Karl's credential engine when real services are integrated)
             'credentials' => $this->credentialProvider->getStudentCredentials($studentId),
             'curriculum_mapping' => $this->credentialProvider->getStudentCurriculumMapping($studentId),
+            // Venture/SideHustle data from Quebec's LaunchPad Service
+            // (MockLaunchPadDataProvider currently, Quebec's API when real services are integrated)
+            'ventures' => $this->launchPadProvider->getStudentVentures($studentId),
         ];
     }
 

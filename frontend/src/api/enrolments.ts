@@ -26,6 +26,17 @@ export async function getCohort(id: number): Promise<Cohort> {
   return data;
 }
 
+export async function updateCohort(id: number, body: {
+  name?: string;
+  start_date?: string;
+  end_date?: string;
+  capacity?: number;
+  teacher_id?: number;
+}): Promise<Cohort> {
+  const { data } = await client.put<Cohort>(`/school/cohorts/${id}`, body);
+  return data;
+}
+
 export async function activateCohort(id: number): Promise<Cohort> {
   const { data } = await client.patch<Cohort>(`/school/cohorts/${id}/activate`);
   return data;
@@ -45,6 +56,11 @@ export async function enrolStudent(cohortId: number, studentId: number) {
 
 export async function removeStudent(cohortId: number, studentId: number): Promise<void> {
   await client.delete(`/school/cohorts/${cohortId}/enrolments/${studentId}`);
+}
+
+export async function getCohortEnrolments(cohortId: number, params?: Record<string, unknown>): Promise<PaginatedResponse<Record<string, unknown>>> {
+  const { data } = await client.get('/school/enrolments', { params: { cohort_id: cohortId, ...params } });
+  return data;
 }
 
 export async function getEnrolments(params?: Record<string, unknown>): Promise<PaginatedResponse<Record<string, unknown>>> {

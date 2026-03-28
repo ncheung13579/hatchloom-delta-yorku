@@ -1,21 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { getEnrolments, getEnrolmentStatistics, removeStudent, exportEnrolments } from '../../api/enrolments';
+import { getExperiences } from '../../api/experiences';
 import MetricCard from '../../components/ui/MetricCard';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 import Pagination from '../../components/ui/Pagination';
-
-function statusBadgeClass(status: string): string {
-  switch (status) {
-    case 'enrolled': return 'bg-success/10 text-[#16A34A]';
-    case 'removed': return 'bg-danger/10 text-danger';
-    default: return 'bg-bg text-soft';
-  }
-}
 
 export default function EnrolmentsPage() {
   const queryClient = useQueryClient();
@@ -28,6 +21,7 @@ export default function EnrolmentsPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
+  const [experienceFilter, setExperienceFilter] = useState('');
   const [cohortFilter, setCohortFilter] = useState('');
   const [removeTarget, setRemoveTarget] = useState<{
     cohort_id: number;
@@ -51,19 +45,25 @@ export default function EnrolmentsPage() {
     const params: Record<string, unknown> = { page, per_page: perPage };
     if (debouncedSearch) params.search = debouncedSearch;
     if (gradeFilter) params.grade = gradeFilter;
+    if (experienceFilter) params.experience_id = Number(experienceFilter);
     if (cohortFilter) params.cohort_id = Number(cohortFilter);
     if (initialStudentId) params.student_id = initialStudentId;
     return params;
   };
 
   const { data: enrolmentsData, isLoading: loadingEnrolments } = useQuery({
-    queryKey: ['enrolments', page, perPage, debouncedSearch, gradeFilter, cohortFilter, initialStudentId],
+    queryKey: ['enrolments', page, perPage, debouncedSearch, gradeFilter, experienceFilter, cohortFilter, initialStudentId],
     queryFn: () => getEnrolments(buildParams()),
   });
 
   const { data: statistics } = useQuery({
     queryKey: ['enrolment-statistics'],
     queryFn: getEnrolmentStatistics,
+  });
+
+  const { data: experiencesData } = useQuery({
+    queryKey: ['experiences-list'],
+    queryFn: () => getExperiences(1, 100),
   });
 
   const removeMutation = useMutation({
@@ -94,19 +94,19 @@ export default function EnrolmentsPage() {
   const meta = enrolmentsData?.meta;
   const gradeOptions = ['7', '8', '9', '10', '11', '12'];
 
-  // Flatten nested cohort_assignments into one row per student-cohort pair
-  const enrolments = (enrolmentsRaw as Array<Record<string, unknown>>).flatMap((student) =>
-    ((student.cohort_assignments as Array<Record<string, unknown>>) ?? []).map((assignment) => ({
-      student_id: student.student_id as number,
-      student_name: (student.name as string) ?? '-',
-      student_email: (student.email as string) ?? '-',
-      grade: (student.grade as string) ?? '-',
-      cohort_id: assignment.cohort_id as number,
-      cohort_name: (assignment.cohort_name as string) ?? '-',
-      status: (assignment.status as string) ?? 'unknown',
-      enrolled_at: assignment.enrolled_at as string,
-    }))
-  );
+  // Keep students grouped (one row per student with cohort pills) — matches reference screen 303
+  const students = (enrolmentsRaw as Array<Record<string, unknown>>).map((student) => ({
+    student_id: student.student_id as number,
+    student_name: (student.name as string) ?? '-',
+    student_email: (student.email as string) ?? '-',
+    grade: (student.grade as string) ?? '-',
+    cohort_assignments: ((student.cohort_assignments as Array<Record<string, unknown>>) ?? []).map((a) => ({
+      cohort_id: a.cohort_id as number,
+      cohort_name: (a.cohort_name as string) ?? '-',
+      experience_name: (a.experience_name as string) ?? '',
+      status: (a.status as string) ?? 'unknown',
+    })),
+  }));
 
   return (
     <div className="space-y-4">
@@ -173,7 +173,7 @@ export default function EnrolmentsPage() {
           <div className="flex items-center gap-3">
             <span className="font-[family-name:var(--font-display)] font-semibold text-[0.95rem] text-charcoal">Students</span>
             <span className="text-[0.75rem] font-semibold px-2.5 py-0.5 rounded-full bg-bg text-soft">
-              {meta?.total ?? enrolments.length} enrolled
+              {meta?.total ?? students.length} enrolled
             </span>
           </div>
           <div className="flex items-center gap-2.5">
@@ -215,6 +215,16 @@ export default function EnrolmentsPage() {
               <option key={g} value={g}>Grade {g}</option>
             ))}
           </select>
+          <select
+            value={experienceFilter}
+            onChange={(e) => { setExperienceFilter(e.target.value); setPage(1); }}
+            className="px-3 py-1.5 border-[1.5px] border-border rounded-lg bg-card font-[family-name:var(--font-body)] text-[0.82rem] font-semibold text-charcoal cursor-pointer focus:outline-none focus:border-primary transition-colors"
+          >
+            <option value="">All Experiences</option>
+            {(experiencesData?.data ?? []).map((exp) => (
+              <option key={exp.id} value={exp.id}>{exp.name}</option>
+            ))}
+          </select>
           <input
             type="number"
             placeholder="Cohort ID"
@@ -226,63 +236,72 @@ export default function EnrolmentsPage() {
 
         {loadingEnrolments ? (
           <Spinner className="py-12" />
-        ) : enrolments.length === 0 ? (
+        ) : students.length === 0 ? (
           <EmptyState title="No enrolments found" description="Adjust your filters or search terms." />
         ) : (
           <>
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Student</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Email</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Grade</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Cohort</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Status</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Enrolled</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Actions</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '24%' }}>Student</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '7%' }}>Grade</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '40%' }}>Cohorts</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '13%' }}>Status</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '12%' }}>Last Active</th>
+                  <th className="text-left px-5 py-3 bg-bg border-b-[1.5px] border-border" style={{ width: '4%' }}></th>
                 </tr>
               </thead>
               <tbody className="bg-card">
-                {enrolments.map((enrolment, i) => {
-                  const studentName = enrolment.student_name;
-                  const studentEmail = enrolment.student_email;
-                  const grade = enrolment.grade;
-                  const cohortName = enrolment.cohort_name;
-                  const status = enrolment.status;
-                  const enrolledAt = enrolment.enrolled_at;
-                  const cohortId = enrolment.cohort_id;
-                  const studentId = enrolment.student_id;
+                {students.map((student) => {
+                  const hasNoCohorts = student.cohort_assignments.length === 0;
+                  const isUnassigned = hasNoCohorts;
 
                   return (
-                    <tr key={`${cohortId}-${studentId}-${i}`} className="transition-colors hover:bg-[#FAFBFE]">
+                    <tr key={student.student_id} className={`transition-colors hover:bg-[#FAFBFE] ${isUnassigned ? 'bg-[rgba(255,31,90,0.03)]' : ''}`}>
                       <td className="px-5 py-3.5 border-b border-border">
                         <div className="flex items-center gap-2.5">
                           <div className="w-[34px] h-[34px] rounded-[10px] bg-gradient-to-br from-teal/20 to-teal flex items-center justify-center text-white font-[family-name:var(--font-display)] font-bold text-[0.7rem] flex-shrink-0">
-                            {studentName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                            {student.student_name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
                           </div>
-                          <div className="font-semibold text-charcoal">{studentName}</div>
+                          <div>
+                            <div className="font-semibold text-charcoal">{student.student_name}</div>
+                            <div className="text-[0.8rem] text-soft">{student.student_email}</div>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 border-b border-border text-[0.82rem] text-soft">{studentEmail}</td>
-                      <td className="px-5 py-3.5 border-b border-border">{grade}</td>
-                      <td className="px-5 py-3.5 border-b border-border">{cohortName}</td>
+                      <td className="px-5 py-3.5 border-b border-border">{student.grade}</td>
                       <td className="px-5 py-3.5 border-b border-border">
-                        <span className={`text-[0.78rem] font-semibold px-2.5 py-1 rounded-full inline-block ${statusBadgeClass(status)}`}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">
-                        {enrolledAt ? new Date(enrolledAt).toLocaleDateString() : '-'}
-                      </td>
-                      <td className="px-5 py-3.5 border-b border-border">
-                        {status === 'enrolled' && (
-                          <button
-                            onClick={() => setRemoveTarget({ cohort_id: cohortId, student_id: studentId, student_name: studentName })}
-                            className="text-sm text-danger hover:underline bg-transparent border-none cursor-pointer font-[family-name:var(--font-body)]"
-                          >
-                            Remove
-                          </button>
+                        {hasNoCohorts ? (
+                          <span className="text-[0.82rem] text-warning font-medium italic">No active cohorts</span>
+                        ) : (
+                          <div className="flex gap-1.5 flex-wrap">
+                            {student.cohort_assignments.map((a, i) => (
+                              <span
+                                key={i}
+                                className="text-[0.78rem] font-medium px-2.5 py-0.5 rounded-md bg-gradient-to-r from-teal/[0.08] to-teal/[0.04] text-teal font-semibold whitespace-nowrap"
+                              >
+                                {a.experience_name ? `${a.experience_name} · ` : ''}{a.cohort_name}
+                              </span>
+                            ))}
+                          </div>
                         )}
+                      </td>
+                      <td className="px-5 py-3.5 border-b border-border">
+                        {hasNoCohorts ? (
+                          <div className="flex items-center gap-[7px]">
+                            <span className="w-2.5 h-2.5 rounded-full bg-warning shadow-[0_0_0_3px_rgba(245,158,11,0.15)] flex-shrink-0" />
+                            <span className="text-[0.82rem] text-soft">Unassigned</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-[7px]">
+                            <span className="w-2.5 h-2.5 rounded-full bg-success shadow-[0_0_0_3px_rgba(34,197,94,0.15)] flex-shrink-0" />
+                            <span className="text-[0.82rem] text-soft">Enrolled</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">-</td>
+                      <td className="px-5 py-3.5 border-b border-border">
+                        <Link to={`/admin/students/${student.student_id}`} className="text-border hover:text-soft hover:translate-x-0.5 transition-all text-xl no-underline">›</Link>
                       </td>
                     </tr>
                   );

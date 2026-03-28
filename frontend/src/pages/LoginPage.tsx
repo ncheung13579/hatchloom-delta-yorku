@@ -30,7 +30,7 @@ export default function LoginPage() {
             <div>
               <div className="text-[0.72rem] font-bold text-soft uppercase tracking-wider mb-2">School Staff</div>
               <div className="grid grid-cols-2 gap-3">
-                <Button onClick={() => quickLogin('test-admin-token', '/admin/dashboard')} className="w-full">
+                <Button variant="secondary" onClick={() => quickLogin('test-admin-token', '/admin/dashboard')} className="w-full">
                   School Admin
                 </Button>
                 <Button variant="secondary" onClick={() => quickLogin('test-teacher-token', '/admin/dashboard')} className="w-full">

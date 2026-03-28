@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getExperience,
   getExperienceStatistics,
   getExperienceStudents,
   getExperienceContents,
   exportExperienceStudents,
+  updateExperience,
 } from '../../api/experiences';
+import { createCohort } from '../../api/enrolments';
+import { AxiosError } from 'axios';
 import MetricCard from '../../components/ui/MetricCard';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 import Pagination from '../../components/ui/Pagination';
 import Button from '../../components/ui/Button';
+import Modal from '../../components/ui/Modal';
+import { useAuth } from '../../context/AuthContext';
 
 function enrolmentBadgeClass(status: string): string {
   switch (status) {
@@ -23,13 +28,56 @@ function enrolmentBadgeClass(status: string): string {
 }
 
 export default function ExperienceDetailPage() {
+  const { user } = useAuth();
+  const isTeacher = user?.role === 'school_teacher';
   const { id } = useParams<{ id: string }>();
   const experienceId = Number(id);
+  const queryClient = useQueryClient();
 
   const [studentPage, setStudentPage] = useState(1);
   const [studentSearch, setStudentSearch] = useState('');
   const [debouncedStudentSearch, setDebouncedStudentSearch] = useState('');
   const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  const [showCreateCohort, setShowCreateCohort] = useState(false);
+  const [cohortName, setCohortName] = useState('');
+  const [cohortStart, setCohortStart] = useState('');
+  const [cohortEnd, setCohortEnd] = useState('');
+  const [cohortCapacity, setCohortCapacity] = useState('');
+
+  const [showEditExp, setShowEditExp] = useState(false);
+  const [editExpName, setEditExpName] = useState('');
+  const [editExpDesc, setEditExpDesc] = useState('');
+
+  const createCohortMut = useMutation({
+    mutationFn: () => createCohort({
+      experience_id: experienceId,
+      name: cohortName,
+      start_date: cohortStart,
+      end_date: cohortEnd,
+      ...(cohortCapacity ? { capacity: Number(cohortCapacity) } : {}),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['experience', experienceId] });
+      setShowCreateCohort(false);
+      setCohortName('');
+      setCohortStart('');
+      setCohortEnd('');
+      setCohortCapacity('');
+    },
+  });
+
+  const updateExpMut = useMutation({
+    mutationFn: () => updateExperience(experienceId, {
+      name: editExpName,
+      description: editExpDesc,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['experience', experienceId] });
+      setShowEditExp(false);
+    },
+  });
+
   const perPage = 15;
 
   const handleStudentSearch = (value: string) => {
@@ -140,6 +188,18 @@ export default function ExperienceDetailPage() {
           <span className={`text-[0.78rem] font-semibold px-3 py-1 rounded-full ${statusPillClass}`}>
             {experience.status.charAt(0).toUpperCase() + experience.status.slice(1)}
           </span>
+          {isTeacher && (
+            <button
+              onClick={() => { setEditExpName(experience.name); setEditExpDesc(experience.description); setShowEditExp(true); }}
+              className="ml-auto flex items-center gap-1.5 px-3.5 py-[7px] border-[1.5px] border-border rounded-[10px] bg-card
+                font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-body cursor-pointer transition-all hover:bg-bg hover:border-soft"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+              Edit
+            </button>
+          )}
         </div>
         {experience.description && (
           <p className="text-[0.88rem] text-soft">{experience.description}</p>
@@ -190,6 +250,91 @@ export default function ExperienceDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Cohorts */}
+      {experience.cohorts && experience.cohorts.length > 0 && (
+        <div className="bg-card border-[1.5px] border-border rounded-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-3">
+              <span className="font-[family-name:var(--font-display)] font-semibold text-[0.95rem] text-charcoal">Cohorts</span>
+              <span className="text-[0.75rem] font-semibold px-2.5 py-0.5 rounded-full bg-bg text-soft">
+                {experience.cohorts.length}
+              </span>
+            </div>
+            {isTeacher && (
+              <button
+                onClick={() => setShowCreateCohort(true)}
+                className="flex items-center gap-1.5 px-3.5 py-[7px] bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-[10px]
+                  font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,31,90,0.25)]"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Create Cohort
+              </button>
+            )}
+          </div>
+          <div className="h-px bg-border" />
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Cohort</th>
+                <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Status</th>
+                <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Students</th>
+                <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border">Dates</th>
+                <th className="text-left px-5 py-3 bg-bg border-b-[1.5px] border-border" style={{ width: '4%' }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {experience.cohorts.map((c) => (
+                <tr key={c.id} className="transition-colors hover:bg-[#FAFBFE] cursor-pointer group">
+                  <td className="px-5 py-3.5 border-b border-border">
+                    <Link to={`/admin/cohorts/${c.id}`} className="font-semibold text-charcoal no-underline hover:text-teal">
+                      {c.name}
+                    </Link>
+                  </td>
+                  <td className="px-5 py-3.5 border-b border-border">
+                    <span className={`text-[0.78rem] font-semibold px-2.5 py-1 rounded-full inline-block ${
+                      c.status === 'active' ? 'bg-success/10 text-[#16A34A]'
+                        : c.status === 'completed' ? 'bg-teal/10 text-teal'
+                        : 'bg-bg text-soft'
+                    }`}>
+                      {c.status.replace(/_/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase())}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5 border-b border-border text-[0.9rem]">
+                    {c.enrolled_count ?? c.student_count ?? 0}
+                  </td>
+                  <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">
+                    {new Date(c.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(c.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
+                  <td className="px-5 py-3.5 border-b border-border">
+                    <Link to={`/admin/cohorts/${c.id}`} className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline">
+                      &rsaquo;
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Create cohort button if no cohorts yet */}
+      {isTeacher && (!experience.cohorts || experience.cohorts.length === 0) && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => setShowCreateCohort(true)}
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-xl
+              font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,31,90,0.25)]"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Create First Cohort
+          </button>
+        </div>
+      )}
 
       {/* Students table */}
       <div className="bg-card border-[1.5px] border-border rounded-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
@@ -268,8 +413,8 @@ export default function ExperienceDetailPage() {
                       <span className="text-teal text-[0.82rem] no-underline hover:underline">{s.student_email as string ?? '-'}</span>
                     </td>
                     <td className="px-5 py-3.5 border-b border-border">
-                      <Link to={`/admin/enrolments?student_id=${s.student_id as number}`} className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline">
-                        ›
+                      <Link to={`/admin/students/${s.student_id as number}`} className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline">
+                        &rsaquo;
                       </Link>
                     </td>
                   </tr>
@@ -289,6 +434,115 @@ export default function ExperienceDetailPage() {
           </>
         )}
       </div>
+
+      {/* Create Cohort Modal */}
+      <Modal open={showCreateCohort} onClose={() => setShowCreateCohort(false)} title="Create Cohort">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[0.82rem] font-semibold text-charcoal mb-1">Cohort Name</label>
+            <input
+              type="text"
+              value={cohortName}
+              onChange={e => setCohortName(e.target.value)}
+              placeholder="e.g. Cohort A"
+              className="w-full px-3.5 py-2.5 border-[1.5px] border-border rounded-xl font-[family-name:var(--font-body)] text-[0.9rem] text-body outline-none focus:border-primary transition-colors"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[0.82rem] font-semibold text-charcoal mb-1">Start Date</label>
+              <input
+                type="date"
+                value={cohortStart}
+                onChange={e => setCohortStart(e.target.value)}
+                className="w-full px-3.5 py-2.5 border-[1.5px] border-border rounded-xl font-[family-name:var(--font-body)] text-[0.9rem] text-body outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[0.82rem] font-semibold text-charcoal mb-1">End Date</label>
+              <input
+                type="date"
+                value={cohortEnd}
+                onChange={e => setCohortEnd(e.target.value)}
+                className="w-full px-3.5 py-2.5 border-[1.5px] border-border rounded-xl font-[family-name:var(--font-body)] text-[0.9rem] text-body outline-none focus:border-primary transition-colors"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[0.82rem] font-semibold text-charcoal mb-1">Capacity (optional)</label>
+            <input
+              type="number"
+              value={cohortCapacity}
+              onChange={e => setCohortCapacity(e.target.value)}
+              placeholder="e.g. 30"
+              className="w-full px-3.5 py-2.5 border-[1.5px] border-border rounded-xl font-[family-name:var(--font-body)] text-[0.9rem] text-body outline-none focus:border-primary transition-colors"
+            />
+          </div>
+          {createCohortMut.isError && (
+            <p className="text-danger text-[0.82rem]">
+              {(createCohortMut.error instanceof AxiosError && createCohortMut.error.response?.data?.message)
+                || 'Failed to create cohort. Please check the fields and try again.'}
+            </p>
+          )}
+          <div className="flex justify-end gap-2.5">
+            <button
+              onClick={() => setShowCreateCohort(false)}
+              className="px-4 py-2 border-[1.5px] border-border rounded-xl bg-card font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-body cursor-pointer transition-all hover:bg-bg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => createCohortMut.mutate()}
+              disabled={!cohortName || !cohortStart || !cohortEnd || createCohortMut.isPending}
+              className="px-4 py-2 bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-xl font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,31,90,0.25)] disabled:opacity-50"
+            >
+              {createCohortMut.isPending ? 'Creating...' : 'Create Cohort'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Experience Modal */}
+      <Modal open={showEditExp} onClose={() => setShowEditExp(false)} title="Edit Experience">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[0.82rem] font-semibold text-charcoal mb-1">Name</label>
+            <input
+              type="text"
+              value={editExpName}
+              onChange={e => setEditExpName(e.target.value)}
+              className="w-full px-3.5 py-2.5 border-[1.5px] border-border rounded-xl font-[family-name:var(--font-body)] text-[0.9rem] text-body outline-none focus:border-primary transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-[0.82rem] font-semibold text-charcoal mb-1">Description</label>
+            <textarea
+              value={editExpDesc}
+              onChange={e => setEditExpDesc(e.target.value)}
+              rows={3}
+              className="w-full px-3.5 py-2.5 border-[1.5px] border-border rounded-xl font-[family-name:var(--font-body)] text-[0.9rem] text-body outline-none focus:border-primary transition-colors resize-none"
+            />
+          </div>
+          {updateExpMut.isError && (
+            <p className="text-danger text-[0.82rem]">Failed to update experience.</p>
+          )}
+          <div className="flex justify-end gap-2.5">
+            <button
+              onClick={() => setShowEditExp(false)}
+              className="px-4 py-2 border-[1.5px] border-border rounded-xl bg-card font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-body cursor-pointer transition-all hover:bg-bg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => updateExpMut.mutate()}
+              disabled={!editExpName || updateExpMut.isPending}
+              className="px-4 py-2 bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-xl font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,31,90,0.25)] disabled:opacity-50"
+            >
+              {updateExpMut.isPending ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

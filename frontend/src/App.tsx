@@ -8,8 +8,9 @@ import DashboardPage from './pages/admin/DashboardPage';
 import ExperiencesPage from './pages/admin/ExperiencesPage';
 import ExperienceDetailPage from './pages/admin/ExperienceDetailPage';
 import EnrolmentsPage from './pages/admin/EnrolmentsPage';
-import ReportingPage from './pages/admin/ReportingPage';
+import CohortDetailPage from './pages/admin/CohortDetailPage';
 import StudentDrilldownPage from './pages/admin/StudentDrilldownPage';
+import ReportingPage from './pages/admin/ReportingPage';
 import PlaceholderPage from './pages/admin/PlaceholderPage';
 import ParentDashboardPage from './pages/parent/ParentDashboardPage';
 import ChildDetailPage from './pages/parent/ChildDetailPage';
@@ -65,11 +66,13 @@ export default function App() {
               <Route path="experiences" element={<ExperiencesPage />} />
               <Route path="experiences/:id" element={<ExperienceDetailPage />} />
               <Route path="enrolments" element={<EnrolmentsPage />} />
-              <Route path="reporting" element={<ReportingPage />} />
+              <Route path="cohorts/:cohortId" element={<CohortDetailPage />} />
               <Route path="students/:studentId" element={<StudentDrilldownPage />} />
-              <Route path="curriculum" element={<PlaceholderPage />} />
+              <Route path="curriculum" element={<ReportingPage />} />
               <Route path="credentials" element={<PlaceholderPage />} />
+              <Route path="billing" element={<PlaceholderPage />} />
               <Route path="settings" element={<PlaceholderPage />} />
+              <Route path="contact" element={<PlaceholderPage />} />
             </Route>
 
             {/* Parent routes */}

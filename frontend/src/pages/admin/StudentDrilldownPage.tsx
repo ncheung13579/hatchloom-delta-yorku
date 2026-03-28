@@ -43,6 +43,7 @@ export default function StudentDrilldownPage() {
   const progress = (drilldown as Record<string, unknown>).progress as Record<string, unknown> | undefined;
   const credentials = (drilldown as Record<string, unknown>).credentials as Array<Record<string, unknown>> | undefined;
   const curriculum = (drilldown as Record<string, unknown>).curriculum_mapping as Record<string, unknown> | undefined;
+  const ventures = (drilldown as Record<string, unknown>).ventures as Record<string, unknown> | undefined;
 
   const enrolmentStudent = enrolmentDetail as Record<string, unknown> | undefined;
   const enrolmentData = enrolmentStudent?.data as Record<string, unknown> | undefined;
@@ -137,6 +138,40 @@ export default function StudentDrilldownPage() {
         </div>
       )}
 
+      {/* LaunchPad Ventures */}
+      {ventures && ((ventures.ventures as Array<Record<string, unknown>>) ?? []).length > 0 && (
+        <div className="bg-card border-[1.5px] border-border rounded-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-[family-name:var(--font-display)] font-semibold text-[0.95rem] text-charcoal">LaunchPad Ventures</h2>
+            <div className="flex items-center gap-3">
+              <span className="text-[0.78rem] font-semibold px-2.5 py-0.5 rounded-full bg-success/10 text-[#16A34A]">
+                {Number(ventures.active ?? 0)} active
+              </span>
+              <span className="text-[0.78rem] font-semibold px-2.5 py-0.5 rounded-full bg-bg text-soft">
+                {Number(ventures.completed ?? 0)} completed
+              </span>
+            </div>
+          </div>
+          <div className="divide-y divide-border">
+            {((ventures.ventures as Array<Record<string, unknown>>) ?? []).map((v, i) => (
+              <div key={i} className="px-6 py-3.5 flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-charcoal text-[0.9rem]">{v.name as string}</div>
+                  <div className="text-[0.82rem] text-soft">
+                    Started {v.created_at ? new Date(v.created_at as string).toLocaleDateString() : '-'}
+                  </div>
+                </div>
+                <span className={`text-[0.78rem] font-semibold px-2.5 py-1 rounded-full ${
+                  v.status === 'active' ? 'bg-success/10 text-[#16A34A]' : 'bg-teal/10 text-teal'
+                }`}>
+                  {(v.status as string ?? 'unknown').charAt(0).toUpperCase() + (v.status as string ?? 'unknown').slice(1)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Credentials */}
       {credentials && credentials.length > 0 && (
         <div className="bg-card border-[1.5px] border-border rounded-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
@@ -162,15 +197,45 @@ export default function StudentDrilldownPage() {
       )}
 
       {/* Curriculum mapping */}
-      {curriculum && (
+      {curriculum && Object.keys(curriculum).length > 0 && (
         <div className="bg-card border-[1.5px] border-border rounded-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
             <h2 className="font-[family-name:var(--font-display)] font-semibold text-[0.95rem] text-charcoal">Curriculum Mapping</h2>
           </div>
-          <div className="p-6">
-            <pre className="text-[0.82rem] text-body bg-bg rounded-xl p-4 overflow-auto max-h-64">
-              {JSON.stringify(curriculum, null, 2)}
-            </pre>
+          <div className="divide-y divide-border">
+            {Object.entries(curriculum).map(([key, rawArea]) => {
+              const area = rawArea as Record<string, unknown>;
+              const areaName = (area.area_name as string) ?? key;
+              const reqsMet = (area.requirements_met as Array<Record<string, unknown>>) ?? [];
+              const totalReqs = (area.total_requirements as number) ?? 0;
+              const coverage = (area.coverage_percentage as number) ?? 0;
+              const pct = Math.round(coverage * 100);
+
+              return (
+                <div key={key} className="px-6 py-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="font-semibold text-charcoal text-[0.95rem]">{areaName}</div>
+                    <span className="text-[0.78rem] font-semibold px-2.5 py-0.5 rounded-full bg-bg text-soft">
+                      {reqsMet.length} of {totalReqs} requirements
+                    </span>
+                  </div>
+                  <div className="mb-3">
+                    <ProgressBar value={pct} />
+                  </div>
+                  {reqsMet.length > 0 && (
+                    <div className="space-y-1.5">
+                      {reqsMet.map((req, i) => (
+                        <div key={i} className="flex items-start gap-2 text-[0.82rem]">
+                          <span className="font-mono font-semibold text-teal bg-teal/[0.08] px-1.5 py-0.5 rounded text-[0.75rem] flex-shrink-0">{req.code as string}</span>
+                          <span className="text-body">{req.description as string}</span>
+                          <span className="text-soft ml-auto flex-shrink-0">via {req.met_by as string}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

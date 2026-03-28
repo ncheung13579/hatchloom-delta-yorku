@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getExperiences, createExperience, deleteExperience } from '../../api/experiences';
 import { getCourses } from '../../api/courses';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Spinner from '../../components/ui/Spinner';
@@ -22,6 +23,8 @@ function statusPillClass(status: string): string {
 }
 
 export default function ExperiencesPage() {
+  const { user } = useAuth();
+  const isTeacher = user?.role === 'school_teacher';
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -107,12 +110,14 @@ export default function ExperiencesPage() {
           <h1 className="text-[1.65rem] font-bold text-charcoal mb-1">Experiences</h1>
           <p className="text-[0.92rem] text-soft">Programs your school has assembled from Hatchloom building blocks</p>
         </div>
-        <Button onClick={openCreate}>
-          <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Create Experience
-        </Button>
+        {isTeacher && (
+          <Button onClick={openCreate}>
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Create Experience
+          </Button>
+        )}
       </div>
 
       {/* Experiences table */}
@@ -154,9 +159,9 @@ export default function ExperiencesPage() {
                 <tr>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '22%' }}>Experience</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '8%' }}>Status</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '24%' }}>Contents</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '16%' }}>Coordinator</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '18%' }}>Contents</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '14%' }}>Cohorts</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '10%' }}>Actions</th>
                   <th className="text-left px-5 py-3 bg-bg border-b-[1.5px] border-border" style={{ width: '3%' }}></th>
                 </tr>
               </thead>
@@ -173,6 +178,13 @@ export default function ExperiencesPage() {
                       <span className={`text-[0.78rem] font-semibold px-2.5 py-1 rounded-full inline-block ${statusPillClass(exp.status)}`}>
                         {exp.status.charAt(0).toUpperCase() + exp.status.slice(1)}
                       </span>
+                    </td>
+                    <td className="px-5 py-3.5 border-b border-border">
+                      {exp.created_by ? (
+                        <div className="font-semibold text-charcoal text-[0.88rem]">{exp.created_by}</div>
+                      ) : (
+                        <span className="text-soft italic text-[0.85rem]">Not assigned</span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 border-b border-border">
                       {(exp.course_count ?? 0) > 0 ? (
@@ -194,19 +206,6 @@ export default function ExperiencesPage() {
                       ) : (
                         <span className="text-[0.85rem] text-soft italic">No cohorts</span>
                       )}
-                    </td>
-                    <td className="px-5 py-3.5 border-b border-border">
-                      <div className="flex items-center gap-2">
-                        <Link to={`/admin/experiences/${exp.id}`} className="text-sm text-primary hover:underline no-underline">
-                          View
-                        </Link>
-                        <button
-                          onClick={() => setDeleteTarget(exp)}
-                          className="text-sm text-danger hover:underline bg-transparent border-none cursor-pointer font-[family-name:var(--font-body)]"
-                        >
-                          Delete
-                        </button>
-                      </div>
                     </td>
                     <td className="px-5 py-3.5 border-b border-border">
                       <Link to={`/admin/experiences/${exp.id}`} className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline">
