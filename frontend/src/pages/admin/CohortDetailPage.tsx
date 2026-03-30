@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCohort, getCohortEnrolments, activateCohort, completeCohort, enrolStudent, updateCohort } from '../../api/enrolments';
-import { getExperience, getExperienceContents } from '../../api/experiences';
+import { getCohort, getCohortEnrolments, activateCohort, completeCohort, enrolStudent, removeStudent, updateCohort, exportEnrolments } from '../../api/enrolments';
+import { getExperience, getExperienceContents, getExperienceStatistics } from '../../api/experiences';
 import { useAuth } from '../../context/AuthContext';
 import MetricCard from '../../components/ui/MetricCard';
 import Spinner from '../../components/ui/Spinner';
@@ -37,6 +37,9 @@ export default function CohortDetailPage() {
   const [editEnd, setEditEnd] = useState('');
   const [editCapacity, setEditCapacity] = useState('');
 
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<{ id: number; name: string } | null>(null);
+
   const { data: cohort, isLoading, error } = useQuery({
     queryKey: ['cohort', id],
     queryFn: () => getCohort(id),
@@ -63,6 +66,12 @@ export default function CohortDetailPage() {
     enabled: !!id,
   });
 
+  const { data: statsData } = useQuery({
+    queryKey: ['experience-statistics', experienceId],
+    queryFn: () => getExperienceStatistics(experienceId!),
+    enabled: !!experienceId,
+  });
+
   const activateMut = useMutation({
     mutationFn: () => activateCohort(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cohort', id] }),
@@ -80,6 +89,16 @@ export default function CohortDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['cohort-enrolments', id] });
       setShowEnrol(false);
       setEnrolStudentId('');
+    },
+  });
+
+  const removeMut = useMutation({
+    mutationFn: (studentId: number) => removeStudent(id, studentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cohort', id] });
+      queryClient.invalidateQueries({ queryKey: ['cohort-enrolments', id] });
+      setShowRemoveConfirm(false);
+      setRemoveTarget(null);
     },
   });
 
@@ -153,7 +172,7 @@ export default function CohortDetailPage() {
           <span className={`text-[0.78rem] font-semibold px-3 py-1 rounded-full ${statusPillClass(cohort.status)}`}>
             {statusLabel}
           </span>
-          {isTeacher && cohort.status !== 'completed' && (
+          {(isTeacher || user?.role === 'school_admin') && cohort.status !== 'completed' && (
             <button
               onClick={() => {
                 setEditName(cohort.name);
@@ -197,7 +216,7 @@ export default function CohortDetailPage() {
 
       {/* Action buttons */}
       <div className="flex items-center gap-2.5">
-        {isTeacher && cohort.status === 'not_started' && (
+        {(isTeacher || user?.role === 'school_admin') && cohort.status === 'not_started' && (
           <button
             onClick={() => activateMut.mutate()}
             disabled={activateMut.isPending}
@@ -208,7 +227,7 @@ export default function CohortDetailPage() {
             {activateMut.isPending ? 'Activating...' : 'Activate Cohort'}
           </button>
         )}
-        {isTeacher && cohort.status === 'active' && (
+        {(isTeacher || user?.role === 'school_admin') && cohort.status === 'active' && (
           <button
             onClick={() => completeMut.mutate()}
             disabled={completeMut.isPending}
@@ -219,7 +238,7 @@ export default function CohortDetailPage() {
             {completeMut.isPending ? 'Completing...' : 'Complete Cohort'}
           </button>
         )}
-        {cohort.status !== 'completed' && (
+        {cohort.status === 'active' && (
           <button
             onClick={() => setShowEnrol(true)}
             className="px-4 py-2 border-[1.5px] border-border rounded-xl bg-card
@@ -235,20 +254,20 @@ export default function CohortDetailPage() {
       <div className="grid grid-cols-3 gap-3">
         <MetricCard
           label="Students Enrolled"
-          value={cohort.enrolled_count ?? enrolments.length}
-          detail={`${enrolments.length} active`}
+          value={cohort.student_count ?? enrolments.length}
+          detail={`${enrolments.filter(e => (e as Record<string, unknown>).assignment_status !== 'removed').length} active this week`}
           accent="teal"
         />
         <MetricCard
           label="Credit Progress"
-          value={cohort.capacity ? `${cohort.capacity}` : '\u2013'}
-          detail={cohort.capacity ? 'Capacity' : 'Not set'}
+          value={`${Math.round(((statsData as Record<string, unknown>)?.credit_progress as Record<string, unknown>)?.average as number * 100 || 0)}%`}
+          detail={`${((statsData as Record<string, unknown>)?.credit_progress as Record<string, unknown>)?.students_with_credits ?? 0} students earning`}
           accent="teal"
         />
         <MetricCard
-          label="Date Range"
-          value={`${Math.ceil((new Date(cohort.end_date).getTime() - new Date(cohort.start_date).getTime()) / (1000 * 60 * 60 * 24))}d`}
-          detail="Duration"
+          label="Timely Completion"
+          value={`${Math.round(((statsData as Record<string, unknown>)?.completion as Record<string, unknown>)?.completion_rate as number * 100 || 0)}%`}
+          detail="Students on schedule"
           accent="teal"
         />
       </div>
@@ -263,7 +282,8 @@ export default function CohortDetailPage() {
             {contents.map((course, ci) => {
               const blocks = ((course.blocks as Array<Record<string, unknown>>) ?? []);
               const totalBlocks = blocks.length;
-              const pct = totalBlocks > 0 ? Math.round((totalBlocks / totalBlocks) * 100) : 0;
+              const completedBlocks = blocks.filter((b) => (b as Record<string, unknown>).completed).length;
+              const pct = totalBlocks > 0 ? Math.round((completedBlocks / totalBlocks) * 100) : 0;
               return (
                 <div key={(course.id as number) ?? ci} className="flex items-center justify-between py-2.5">
                   <div className="flex items-center gap-2.5">
@@ -309,7 +329,20 @@ export default function CohortDetailPage() {
                 className="border-none bg-transparent font-[family-name:var(--font-body)] text-[0.85rem] text-body outline-none w-[140px] placeholder:text-[#B0B5BF]"
               />
             </div>
-            <button className="flex items-center gap-1.5 px-3.5 py-[7px] border-[1.5px] border-border rounded-[10px] bg-card font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-body cursor-pointer transition-all hover:bg-bg hover:border-soft">
+            <button
+              onClick={async () => {
+                try {
+                  const blob = await exportEnrolments();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `cohort-${id}-students.csv`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                } catch { /* export error */ }
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-[7px] border-[1.5px] border-border rounded-[10px] bg-card font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-body cursor-pointer transition-all hover:bg-bg hover:border-soft"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
@@ -330,9 +363,11 @@ export default function CohortDetailPage() {
               <thead>
                 <tr>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '30%' }}>Student</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '10%' }}>Status</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '6%' }}>Grade</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '6%' }}>Status</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '14%' }}>Last Active</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '28%' }}>Contact</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '15%' }}>Enrolled</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '10%' }}>Credits</th>
                   <th className="text-left px-5 py-3 bg-bg border-b-[1.5px] border-border" style={{ width: '4%' }}></th>
                 </tr>
               </thead>
@@ -341,8 +376,10 @@ export default function CohortDetailPage() {
                   const studentName = (student.name as string) ?? (student.student_name as string) ?? '-';
                   const studentEmail = (student.email as string) ?? (student.student_email as string) ?? '-';
                   const studentId = (student.student_id as number) ?? i;
+                  const studentGrade = (student.grade as number | string) ?? '-';
                   const cohortAssignments = (student.cohort_assignments ?? []) as Array<Record<string, unknown>>;
-                  const thisCohort = cohortAssignments.find(a => (a.cohort_id as number) === id);
+                  const matchingAssignments = cohortAssignments.filter(a => (a.cohort_id as number) === id);
+                  const thisCohort = matchingAssignments.find(a => a.status === 'enrolled') ?? matchingAssignments[0];
                   const enrolledAt = thisCohort?.enrolled_at as string | undefined;
                   const enrolledStatus = (thisCohort?.status as string) ?? (student.assignment_status as string) ?? 'enrolled';
 
@@ -358,14 +395,26 @@ export default function CohortDetailPage() {
                           </div>
                         </div>
                       </td>
+                      <td className="px-5 py-3.5 border-b border-border text-[0.9rem] text-body">{studentGrade}</td>
                       <td className="px-5 py-3.5 border-b border-border">
-                        <div className="flex items-center gap-[7px]">
-                          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                            enrolledStatus === 'enrolled' || enrolledStatus === 'assigned'
-                              ? 'bg-[#22C55E] shadow-[0_0_0_3px_rgba(34,197,94,0.15)]'
-                              : 'bg-[#EF4444] shadow-[0_0_0_3px_rgba(239,68,68,0.15)]'
-                          }`} />
-                        </div>
+                        <span className={`w-2.5 h-2.5 rounded-full inline-block ${
+                          enrolledStatus === 'enrolled' || enrolledStatus === 'assigned'
+                            ? 'bg-[#22C55E] shadow-[0_0_0_3px_rgba(34,197,94,0.15)]'
+                            : enrolledStatus === 'removed'
+                            ? 'bg-[#EF4444] shadow-[0_0_0_3px_rgba(239,68,68,0.15)]'
+                            : 'bg-[#F59E0B] shadow-[0_0_0_3px_rgba(245,158,11,0.15)]'
+                        }`} />
+                      </td>
+                      <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">
+                        {enrolledAt ? (() => {
+                          const date = new Date(enrolledAt);
+                          const now = new Date();
+                          const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+                          if (diffDays === 0) return 'Today';
+                          if (diffDays === 1) return 'Yesterday';
+                          if (diffDays < 7) return `${diffDays} days ago`;
+                          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        })() : '-'}
                       </td>
                       <td className="px-5 py-3.5 border-b border-border">
                         <a
@@ -379,16 +428,29 @@ export default function CohortDetailPage() {
                           {studentEmail}
                         </a>
                       </td>
-                      <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">
-                        {enrolledAt ? new Date(enrolledAt).toLocaleDateString() : '-'}
+                      <td className="px-5 py-3.5 border-b border-border text-[0.9rem] font-semibold text-charcoal">
+                        {(student.credits as number) ?? '-'}
                       </td>
                       <td className="px-5 py-3.5 border-b border-border">
-                        <Link
-                          to={`/admin/students/${studentId}`}
-                          className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline inline-block"
-                        >
-                          &rsaquo;
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          {cohort.status !== 'completed' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setRemoveTarget({ id: studentId, name: studentName }); setShowRemoveConfirm(true); }}
+                              title="Remove student"
+                              className="w-7 h-7 rounded-lg flex items-center justify-center border-none bg-transparent text-soft cursor-pointer transition-all hover:bg-danger/10 hover:text-danger"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          <Link
+                            to={`/admin/students/${studentId}`}
+                            className="text-border group-hover:text-soft group-hover:translate-x-0.5 transition-all text-xl no-underline inline-block"
+                          >
+                            &rsaquo;
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -512,6 +574,33 @@ export default function CohortDetailPage() {
               className="px-4 py-2 bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-xl font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,31,90,0.25)] disabled:opacity-50"
             >
               {updateMut.isPending ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Remove Student Confirmation Modal */}
+      <Modal open={showRemoveConfirm} onClose={() => { setShowRemoveConfirm(false); setRemoveTarget(null); }} title="Remove Student">
+        <div className="space-y-4">
+          <p className="text-[0.9rem] text-body">
+            Are you sure you want to remove <span className="font-semibold">{removeTarget?.name}</span> from this cohort?
+          </p>
+          {removeMut.isError && (
+            <p className="text-danger text-[0.82rem]">Failed to remove student.</p>
+          )}
+          <div className="flex justify-end gap-2.5">
+            <button
+              onClick={() => { setShowRemoveConfirm(false); setRemoveTarget(null); }}
+              className="px-4 py-2 border-[1.5px] border-border rounded-xl bg-card font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-body cursor-pointer transition-all hover:bg-bg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => removeTarget && removeMut.mutate(removeTarget.id)}
+              disabled={removeMut.isPending}
+              className="px-4 py-2 bg-gradient-to-br from-[#EF4444] to-[#DC2626] text-white border-none rounded-xl font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(239,68,68,0.25)] disabled:opacity-50"
+            >
+              {removeMut.isPending ? 'Removing...' : 'Remove Student'}
             </button>
           </div>
         </div>

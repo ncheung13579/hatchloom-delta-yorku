@@ -68,52 +68,60 @@ Use this as a cheat sheet while clicking through the app. Each section maps to a
     - Click **"Create Experience"**
     - The new experience appears in the table
     - "Courses have **names** and a **description**. The course codes come from Team Papa's course catalogue — we select courses by checking them from the list. The **connections between courses** are defined by grouping them into an experience."
-14. Click on an existing experience name (e.g., **"Business Foundations"**) → **Experience Detail** page
-    - Shows courses, cohorts, and statistics for this experience
+14. Click on the new experience you just created (**"Financial Literacy 101"**) → **Experience Detail** page
+    - Shows courses and statistics for this experience
     - "This is the **course page** — it shows the experience's contents, cohorts, and performance metrics"
 15. **Assign instructor**: Click the **"Edit" button** (pencil icon, top-right)
     - The Edit Experience modal opens
     - Point out the **Coordinator dropdown** — this only appears for admins, not teachers
-    - Change the coordinator from "Ms. Smith" to **"Mr. Johnson"**
+    - Select **"Mr. Johnson"** as coordinator
     - Click **"Save Changes"**
-    - "This demonstrates **assigning the principal instructor** — the admin can reassign which teacher coordinates the experience"
-16. Click on a cohort name (e.g., **"Cohort A"**) → **Screen 302 — Cohort Detail**
+    - "This demonstrates **assigning the principal instructor** — the admin can assign which teacher coordinates the experience"
+16. **Create first cohort**: Click **"Create Cohort"** button
+    - Fill in:
+      - Name: "Spring 2026"
+      - Start date: today's date
+      - End date: a few months out
+    - Click **"Create"**
+    - The new cohort appears on the page
+    - "The admin has created an experience from scratch, assigned an instructor, and set up its first cohort"
+17. Click on the cohort you just created (**"Spring 2026"**) → **Screen 302 — Cohort Detail**
     - Point out the **3 metric cards**: Students Enrolled, Credit Progress, Timely Completion
     - Point out the **Contents & Delivery** section with courses and block progress bars
     - Point out the **Students table**: Student, Grade, Status dot, Last Active, Contact (email link), Credits
-17. Show **search**: type a student name in the search box → table filters
-18. Show **export**: click the "Export" button → CSV downloads
-19. **Manually register a student**: click **"Enrol Student"** button
+18. Show **search**: type a student name in the search box → table filters
+19. Show **export**: click the "Export" button → CSV downloads
+20. **Manually register a student**: click **"Enrol Student"** button
     - Enter a student ID (e.g., 12 for Noah Bergstrom)
     - Click **"Enrol"**
     - The student appears in the table
     - "This demonstrates the admin **manually registering a student** to the cohort"
-20. **Remove a student**: hover over a student row, click the **✕ button** on the right
+21. **Remove a student**: hover over a student row, click the **✕ button** on the right
     - A confirmation modal appears: "Are you sure you want to remove [Name] from this cohort?"
     - Click **"Remove Student"**
     - The student is removed from the table
     - "The admin can both add and remove student registrations"
-21. Show **cohort lifecycle**: if the cohort is "Not Started", click **"Activate Cohort"**
-    - Status changes to "Active"
+22. Show **cohort lifecycle**: click **"Activate Cohort"**
+    - Status changes from "Not Started" to "Active"
     - "Cohort status follows the State pattern: Not Started → Active → Completed. One-directional, no going back."
 
 ---
 
 ## Part 3 — Enrolment Overview (User Story 6 continued)
 
-22. Click **"Enrolment"** in the sidebar → **Screen 303**
+23. Click **"Enrolment"** in the sidebar → **Screen 303**
     - Point out the **3 metric cards**: Students Enrolled, Active Assignments, Not in Any Active Cohort
     - If there's a warning banner: "3 students are not in any active cohort" — point it out
     - "This gives the admin a school-wide view of **all student registrations**"
-23. Show **filters**: use the Grade, Experience, and Cohort dropdowns
+24. Show **filters**: use the Grade, Experience, and Cohort dropdowns
     - Select "Grade 10" → table filters to grade 10 students only
     - Clear the filter
-24. Show the **student table**: Student, Grade, Active Cohorts (as pills), Status, Last Active
+25. Show the **student table**: Student, Grade, Active Cohorts (as pills), Status, Last Active
     - Students with no cohorts show "No active cohorts" in amber text and "Unassigned" status
     - "Unassigned students are flagged so the admin knows who still needs to be registered"
-25. Show **search**: type a name → table filters
-26. Show **export**: click "Export" → CSV downloads
-27. **Drill-down:** Click the arrow on any student row → Student Drilldown page
+26. Show **search**: type a name → table filters
+27. Show **export**: click "Export" → CSV downloads
+28. **Drill-down:** Click the arrow on any student row → Student Drilldown page
     - Same detailed view as from the Dashboard
 
 ---
@@ -124,22 +132,22 @@ Use this as a cheat sheet while clicking through the app. Each section maps to a
 
 ### What to show: Admin can see what every role sees
 
-28. Click **"Sign Out"**
-29. Click **"Teacher"**
+29. Click **"Sign Out"**
+30. Click **"Teacher"**
     - Role badge changes to **"Teacher"**
     - Click **"Experiences"** — point out the teacher can also create experiences and manage cohorts
     - "Teachers build and run experiences day-to-day. The admin has additional privileges like reassigning coordinators."
-30. Click **"Sign Out"**
-31. Click **"Student"**
+31. Click **"Sign Out"**
+32. Click **"Student"**
     - You're now in the **Student Portal** — completely different layout
     - "Students see only their own data — their courses, their progress, their credentials. This is what the admin would see when testing the student role."
-32. Click **"Sign Out"**
-33. Click **"Parent"**
+33. Click **"Sign Out"**
+34. Click **"Parent"**
     - You're in the **Parent Portal**
     - Shows linked children with their progress
     - "Parents can only see data for their linked children"
-34. Click **"Sign Out"**
-35. Click **"School Admin"** again
+35. Click **"Sign Out"**
+36. Click **"School Admin"** again
     - Full admin view is restored
     - "This demonstrates role-based access — each role sees a different view of the same data, enforced by the backend. The admin can switch between roles to verify what each role has access to, then revert to the admin role to make changes."
 

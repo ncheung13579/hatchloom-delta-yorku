@@ -163,8 +163,10 @@ class DashboardService
             ],
             'statistics' => [
                 'enrolment_rate' => $totalStudents > 0 ? round($totalEnrolled / $totalStudents, 2) : 0,
-                'average_completion' => 0.0,
-                'average_credit_progress' => 0.0,
+                // Mock data — in production, average_completion comes from Papa's Course Service
+                // and average_credit_progress from Karl's credential engine.
+                'average_completion' => $totalEnrolled > 0 ? 0.68 : 0.0,
+                'average_credit_progress' => $this->progressProvider->calculateCreditProgress($experiences),
             ],
             'warnings' => $warnings,
         ];
@@ -283,10 +285,22 @@ class DashboardService
             'enrolments' => $enrolments,
             // Progress values are hardcoded placeholders when using mock providers.
             // When real services are integrated, these will come from Team Papa's Course Service.
+            // NOTE: courses_completed, courses_in_progress, overall_completion are documented
+            // in API-CONTRACT.docx and consumed by other teams. Do not remove or rename them.
             'progress' => [
                 'courses_completed' => 1,
                 'courses_in_progress' => 2,
                 'overall_completion' => 0.35,
+                // Additional fields for Delta's own frontend drill-down display
+                'courses_enrolled' => 3,
+                'blocks_completed' => 12,
+                'total_blocks' => 36,
+                'credit_progress' => 45,
+                'courses' => [
+                    ['name' => 'Intro to Entrepreneurship', 'blocks_completed' => 6, 'total_blocks' => 8, 'completion' => 75],
+                    ['name' => 'Marketing Basics', 'blocks_completed' => 4, 'total_blocks' => 12, 'completion' => 33],
+                    ['name' => 'Financial Literacy', 'blocks_completed' => 2, 'total_blocks' => 16, 'completion' => 13],
+                ],
             ],
             // Credentials and curriculum mapping come from the injected provider
             // (MockCredentialDataProvider currently, Karl's credential engine when real services are integrated)

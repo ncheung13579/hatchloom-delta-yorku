@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, Link } from 'react-router-dom';
-import { getEnrolments, getEnrolmentStatistics, removeStudent, exportEnrolments } from '../../api/enrolments';
+import { getEnrolments, getEnrolmentStatistics, removeStudent, exportEnrolments, getCohorts } from '../../api/enrolments';
 import { getExperiences } from '../../api/experiences';
 import MetricCard from '../../components/ui/MetricCard';
 import Button from '../../components/ui/Button';
@@ -66,6 +66,11 @@ export default function EnrolmentsPage() {
     queryFn: () => getExperiences(1, 100),
   });
 
+  const { data: cohortsData } = useQuery({
+    queryKey: ['cohorts-list'],
+    queryFn: () => getCohorts(),
+  });
+
   const removeMutation = useMutation({
     mutationFn: ({ cohort_id, student_id }: { cohort_id: number; student_id: number }) =>
       removeStudent(cohort_id, student_id),
@@ -105,6 +110,7 @@ export default function EnrolmentsPage() {
       cohort_name: (a.cohort_name as string) ?? '-',
       experience_name: (a.experience_name as string) ?? '',
       status: (a.status as string) ?? 'unknown',
+      enrolled_at: (a.enrolled_at as string) ?? '',
     })),
   }));
 
@@ -135,8 +141,8 @@ export default function EnrolmentsPage() {
           />
           <MetricCard
             label="Active Assignments"
-            value={statistics.enrolled}
-            detail="Student-cohort placements"
+            value={statistics.assigned ?? statistics.enrolled}
+            detail="Student–cohort placements"
             accent="teal"
           />
           <MetricCard
@@ -148,22 +154,21 @@ export default function EnrolmentsPage() {
         </div>
       )}
 
-      {/* Attention card for unassigned students */}
-      {statistics && statistics.not_assigned > 0 && (
-        <div className="rounded-[14px] px-5 py-3.5 flex items-center justify-between border-l-4 border-l-warning bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7] border-[1.5px] border-[#FDE68A]">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 bg-warning/15 text-[#B45309]">
-              <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-              </svg>
+      {/* Backend warnings (capacity alerts, unassigned students, etc.) */}
+      {statistics?.warnings && statistics.warnings.length > 0 && (
+        <div className="space-y-2">
+          {statistics.warnings.map((w, i) => (
+            <div key={i} className="rounded-[14px] px-5 py-3.5 flex items-center border-l-4 border-l-warning bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7] border-[1.5px] border-[#FDE68A]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 bg-warning/15 text-[#B45309]">
+                  <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <strong className="font-semibold text-charcoal text-[0.9rem]">{w.message}</strong>
+              </div>
             </div>
-            <div>
-              <strong className="font-semibold text-charcoal text-[0.9rem]">
-                {statistics.not_assigned} student{statistics.not_assigned !== 1 ? 's are' : ' is'} not in any active cohort
-              </strong>
-              <span className="text-soft text-[0.82rem] block mt-0.5">Enrolled but not assigned — they won't receive content until placed</span>
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
@@ -225,13 +230,16 @@ export default function EnrolmentsPage() {
               <option key={exp.id} value={exp.id}>{exp.name}</option>
             ))}
           </select>
-          <input
-            type="number"
-            placeholder="Cohort ID"
+          <select
             value={cohortFilter}
             onChange={(e) => { setCohortFilter(e.target.value); setPage(1); }}
-            className="w-28 px-3 py-1.5 border-[1.5px] border-border rounded-lg bg-card font-[family-name:var(--font-body)] text-[0.82rem] text-body focus:outline-none focus:border-primary transition-colors placeholder:text-[#B0B5BF]"
-          />
+            className="px-3 py-1.5 border-[1.5px] border-border rounded-lg bg-card font-[family-name:var(--font-body)] text-[0.82rem] font-semibold text-charcoal cursor-pointer focus:outline-none focus:border-primary transition-colors"
+          >
+            <option value="">All Cohorts</option>
+            {(cohortsData?.data ?? []).map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
         </div>
 
         {loadingEnrolments ? (
@@ -243,9 +251,9 @@ export default function EnrolmentsPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '24%' }}>Student</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '28%' }}>Student</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '7%' }}>Grade</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '40%' }}>Cohorts</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '36%' }}>Active Cohorts</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '13%' }}>Status</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '12%' }}>Last Active</th>
                   <th className="text-left px-5 py-3 bg-bg border-b-[1.5px] border-border" style={{ width: '4%' }}></th>
@@ -299,7 +307,15 @@ export default function EnrolmentsPage() {
                           </div>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">-</td>
+                      <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">
+                        {(() => {
+                          const dates = student.cohort_assignments
+                            .filter(a => a.enrolled_at)
+                            .map(a => new Date(a.enrolled_at).getTime());
+                          if (dates.length === 0) return '-';
+                          return new Date(Math.max(...dates)).toLocaleDateString();
+                        })()}
+                      </td>
                       <td className="px-5 py-3.5 border-b border-border">
                         <Link to={`/admin/students/${student.student_id}`} className="text-border hover:text-soft hover:translate-x-0.5 transition-all text-xl no-underline">›</Link>
                       </td>

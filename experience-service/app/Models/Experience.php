@@ -56,7 +56,7 @@ class Experience extends Model
      *   - status: 'active' or 'archived' — controls visibility in listings
      *   - created_by: FK to users table — the teacher who created this experience
      */
-    protected $fillable = ['school_id', 'name', 'description', 'status', 'created_by'];
+    protected $fillable = ['school_id', 'name', 'description', 'status', 'grade', 'total_credits', 'created_by'];
 
     /**
      * Register the SchoolScope global scope for automatic tenant isolation.

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getExperience,
@@ -8,6 +8,7 @@ import {
   getExperienceContents,
   exportExperienceStudents,
   updateExperience,
+  deleteExperience,
 } from '../../api/experiences';
 import { createCohort } from '../../api/enrolments';
 import { AxiosError } from 'axios';
@@ -33,6 +34,9 @@ export default function ExperienceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const experienceId = Number(id);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [studentPage, setStudentPage] = useState(1);
   const [studentSearch, setStudentSearch] = useState('');
@@ -48,6 +52,7 @@ export default function ExperienceDetailPage() {
   const [showEditExp, setShowEditExp] = useState(false);
   const [editExpName, setEditExpName] = useState('');
   const [editExpDesc, setEditExpDesc] = useState('');
+  const [editCoordinator, setEditCoordinator] = useState<number | ''>('');
 
   const createCohortMut = useMutation({
     mutationFn: () => createCohort({
@@ -71,10 +76,19 @@ export default function ExperienceDetailPage() {
     mutationFn: () => updateExperience(experienceId, {
       name: editExpName,
       description: editExpDesc,
+      ...(editCoordinator ? { created_by: Number(editCoordinator) } : {}),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['experience', experienceId] });
       setShowEditExp(false);
+    },
+  });
+
+  const deleteExpMut = useMutation({
+    mutationFn: () => deleteExperience(experienceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['experiences'] });
+      navigate('/admin/experiences');
     },
   });
 
@@ -143,6 +157,7 @@ export default function ExperienceDetailPage() {
   const stats = statistics as Record<string, unknown> | undefined;
   const enrolmentStats = stats?.enrolment as Record<string, unknown> | undefined;
   const completionStats = stats?.completion as Record<string, unknown> | undefined;
+  const creditStats = stats?.credit_progress as Record<string, unknown> | undefined;
   const totalCohorts = experience.cohorts?.length ?? 0;
   const activeCohorts = experience.cohorts?.filter((c) => c.status === 'active').length ?? 0;
   const enrolledStudents = (enrolmentStats?.total_students as number) ?? 0;
@@ -188,9 +203,17 @@ export default function ExperienceDetailPage() {
           <span className={`text-[0.78rem] font-semibold px-3 py-1 rounded-full ${statusPillClass}`}>
             {experience.status.charAt(0).toUpperCase() + experience.status.slice(1)}
           </span>
-          {isTeacher && (
+          {experience.created_by && (
+            <span className="text-[0.85rem] text-soft flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+              {experience.created_by}
+            </span>
+          )}
+          {(isTeacher || user?.role === 'school_admin') && (
             <button
-              onClick={() => { setEditExpName(experience.name); setEditExpDesc(experience.description); setShowEditExp(true); }}
+              onClick={() => { setEditExpName(experience.name); setEditExpDesc(experience.description); setEditCoordinator(experience.created_by_id ?? ''); setShowEditExp(true); }}
               className="ml-auto flex items-center gap-1.5 px-3.5 py-[7px] border-[1.5px] border-border rounded-[10px] bg-card
                 font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-body cursor-pointer transition-all hover:bg-bg hover:border-soft"
             >
@@ -200,6 +223,18 @@ export default function ExperienceDetailPage() {
               Edit
             </button>
           )}
+          {(isTeacher || user?.role === 'school_admin') && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-1.5 px-3.5 py-[7px] border-[1.5px] border-danger/30 rounded-[10px] bg-card
+                font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-danger cursor-pointer transition-all hover:bg-danger/5 hover:border-danger/50"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+              Delete
+            </button>
+          )}
         </div>
         {experience.description && (
           <p className="text-[0.88rem] text-soft">{experience.description}</p>
@@ -207,7 +242,7 @@ export default function ExperienceDetailPage() {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         <MetricCard label="Total Cohorts" value={totalCohorts} detail={`${activeCohorts} active`} accent="teal" />
         <MetricCard label="Enrolled Students" value={enrolledStudents} accent="teal" />
         <MetricCard
@@ -215,6 +250,12 @@ export default function ExperienceDetailPage() {
           value={`${completionRate}%`}
           detail="of enrolled students"
           accent={completionRate >= 70 ? 'success' : 'warning'}
+        />
+        <MetricCard
+          label="Credit Progress"
+          value={`${creditStats?.average ?? 0}%`}
+          detail={`${creditStats?.students_with_credits ?? 0} students earning`}
+          accent="orange"
         />
       </div>
 
@@ -261,7 +302,7 @@ export default function ExperienceDetailPage() {
                 {experience.cohorts.length}
               </span>
             </div>
-            {isTeacher && (
+            {(isTeacher || user?.role === 'school_admin') && (
               <button
                 onClick={() => setShowCreateCohort(true)}
                 className="flex items-center gap-1.5 px-3.5 py-[7px] bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-[10px]
@@ -321,7 +362,7 @@ export default function ExperienceDetailPage() {
       )}
 
       {/* Create cohort button if no cohorts yet */}
-      {isTeacher && (!experience.cohorts || experience.cohorts.length === 0) && (
+      {(isTeacher || user?.role === 'school_admin') && (!experience.cohorts || experience.cohorts.length === 0) && (
         <div className="flex justify-center">
           <button
             onClick={() => setShowCreateCohort(true)}
@@ -523,6 +564,20 @@ export default function ExperienceDetailPage() {
               className="w-full px-3.5 py-2.5 border-[1.5px] border-border rounded-xl font-[family-name:var(--font-body)] text-[0.9rem] text-body outline-none focus:border-primary transition-colors resize-none"
             />
           </div>
+          {user?.role === 'school_admin' && (
+            <div>
+              <label className="block text-[0.82rem] font-semibold text-charcoal mb-1">Coordinator</label>
+              <select
+                value={editCoordinator}
+                onChange={e => setEditCoordinator(e.target.value ? Number(e.target.value) : '')}
+                className="w-full px-3.5 py-2.5 border-[1.5px] border-border rounded-xl font-[family-name:var(--font-body)] text-[0.9rem] text-body outline-none focus:border-primary transition-colors bg-card"
+              >
+                <option value="">— Select coordinator —</option>
+                <option value="2">Ms. Smith</option>
+                <option value="3">Mr. Johnson</option>
+              </select>
+            </div>
+          )}
           {updateExpMut.isError && (
             <p className="text-danger text-[0.82rem]">Failed to update experience.</p>
           )}
@@ -539,6 +594,33 @@ export default function ExperienceDetailPage() {
               className="px-4 py-2 bg-gradient-to-br from-primary to-primary-dark text-white border-none rounded-xl font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(255,31,90,0.25)] disabled:opacity-50"
             >
               {updateExpMut.isPending ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Experience Confirmation Modal */}
+      <Modal open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Experience">
+        <div className="space-y-4">
+          <p className="text-[0.9rem] text-body">
+            Are you sure you want to delete <span className="font-semibold">{experience?.name}</span>? This action cannot be undone.
+          </p>
+          {deleteExpMut.isError && (
+            <p className="text-danger text-[0.82rem]">Failed to delete experience.</p>
+          )}
+          <div className="flex justify-end gap-2.5">
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className="px-4 py-2 border-[1.5px] border-border rounded-xl bg-card font-[family-name:var(--font-body)] text-[0.85rem] font-semibold text-body cursor-pointer transition-all hover:bg-bg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => deleteExpMut.mutate()}
+              disabled={deleteExpMut.isPending}
+              className="px-4 py-2 bg-gradient-to-br from-[#EF4444] to-[#DC2626] text-white border-none rounded-xl font-[family-name:var(--font-body)] text-[0.85rem] font-semibold cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(239,68,68,0.25)] disabled:opacity-50"
+            >
+              {deleteExpMut.isPending ? 'Deleting...' : 'Delete Experience'}
             </button>
           </div>
         </div>

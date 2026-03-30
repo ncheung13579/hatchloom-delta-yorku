@@ -258,6 +258,8 @@ class ExperienceController extends Controller
                     'name' => $c['name'],
                     'status' => $c['status'],
                     'student_count' => $c['student_count'],
+                    'start_date' => $c['start_date'] ?? null,
+                    'end_date' => $c['end_date'] ?? null,
                 ])->all();
             }
         } catch (\Exception $e) {
@@ -274,6 +276,7 @@ class ExperienceController extends Controller
             'courses' => $courses,
             'cohorts' => $cohorts,
             'created_by' => $experience->creator?->name,
+            'created_by_id' => $experience->created_by,
             'created_at' => $experience->created_at?->toIso8601String(),
         ]);
     }

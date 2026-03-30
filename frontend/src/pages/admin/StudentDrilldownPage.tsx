@@ -74,7 +74,7 @@ export default function StudentDrilldownPage() {
       {/* Progress metrics */}
       {progress && (
         <div className="grid grid-cols-4 gap-3">
-          <MetricCard label="Overall Progress" value={`${progress.overall_completion ?? 0}%`} detail="Course completion" accent="teal" />
+          <MetricCard label="Overall Progress" value={`${Math.round(Number(progress.overall_completion ?? 0) * 100)}%`} detail="Course completion" accent="teal" />
           <MetricCard label="Courses Enrolled" value={Number(progress.courses_enrolled ?? 0)} detail="Active courses" accent="teal" />
           <MetricCard label="Blocks Completed" value={Number(progress.blocks_completed ?? 0)} detail={`of ${progress.total_blocks ?? 0}`} accent="teal" />
           <MetricCard label="Credit Progress" value={`${progress.credit_progress ?? 0}%`} detail="of target" accent="orange" />

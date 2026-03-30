@@ -31,7 +31,10 @@ export interface Experience {
   description: string;
   status: 'active' | 'published' | 'draft' | 'archived';
   school_id: number;
+  grade?: number;
+  total_credits?: number;
   created_by: number | string;
+  created_by_id?: number;
   courses?: ExperienceCourse[];
   cohorts?: Cohort[];
   course_count?: number;

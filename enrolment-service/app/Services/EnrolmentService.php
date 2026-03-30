@@ -114,9 +114,10 @@ class EnrolmentService
             $query->whereIn('id', $studentIds);
         }
 
-        // Filter by cohort_id — find students who have an enrolment in that specific cohort.
+        // Filter by cohort_id — find students who are currently enrolled in that specific cohort.
         if (isset($filters['cohort_id'])) {
             $studentIds = CohortEnrolment::where('cohort_id', $filters['cohort_id'])
+                ->where('status', 'enrolled')
                 ->pluck('student_id')
                 ->unique();
 
@@ -134,8 +135,9 @@ class EnrolmentService
             $query->whereIn('id', $filters['student_ids']);
         }
 
-        // Grade filtering will be available when the users table includes a grade column.
-        // Grade filtering is accepted but not yet applied (awaiting users table migration).
+        if (isset($filters['grade'])) {
+            $query->where('grade', $filters['grade']);
+        }
 
         $students = $query->paginate($perPage);
 
@@ -176,6 +178,7 @@ class EnrolmentService
             'student_id' => $student->id,
             'name' => $student->name,
             'email' => $student->email,
+            'grade' => $student->grade,
             'cohort_assignments' => $assignments,
             'assignment_status' => $this->determineAssignmentStatus($enrolments),
         ];

@@ -258,14 +258,18 @@ class ExperienceScreenService
                 'removed' => $removedStudents,
             ],
             'completion' => [
-                'completed' => 0,           // Stub — needs Course Service progress data when integrated
-                'in_progress' => $activeStudents,
-                'not_started' => 0,         // Stub — needs Course Service progress data when integrated
+                // Mock data — in production, sourced from Papa's Course Service progress tracking.
+                'completed' => (int) ceil($activeStudents * 0.3),
+                'in_progress' => $activeStudents - (int) ceil($activeStudents * 0.3),
+                'not_started' => max(0, $totalStudents - $activeStudents),
                 'completion_rate' => $completionRate,
             ],
             'credit_progress' => [
-                'average' => 0.0,           // Stub — needs credential engine integration
-                'students_with_credits' => 0,
+                // Mock data — in production, sourced from Karl's credential engine.
+                // Average credit % scales with completion rate; students_with_credits
+                // assumes ~75% of active students have earned at least one credit.
+                'average' => $totalStudents > 0 ? round($completionRate * 0.85, 2) : 0.0,
+                'students_with_credits' => (int) ceil($activeStudents * 0.75),
             ],
         ];
     }

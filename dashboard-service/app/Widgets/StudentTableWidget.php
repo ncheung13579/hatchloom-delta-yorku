@@ -83,15 +83,22 @@ class StudentTableWidget implements DashboardWidget
                 $status = 'inactive';
             }
 
+            // Extract cohort names from the assignments for display as pills on Screen 300.
+            $cohortNames = array_values(array_filter(
+                array_map(fn(array $c): ?string => $c['cohort_name'] ?? null, $cohortAssignments)
+            ));
+
             return [
                 'student_id' => $student->id,
                 'name' => $student->name,
                 'email' => $student->email,
+                'grade' => $student->grade,
                 // If the Enrolment Service was unavailable ($enrolment is null),
                 // we show 'unknown' instead of a potentially incorrect status
                 'status' => $enrolment !== null ? $status : 'unknown',
                 'cohort_count' => count($cohortAssignments),
                 'active_cohort_count' => count($activeCohorts),
+                'cohort_names' => $cohortNames,
                 'last_active_at' => $enrolment['last_active_at'] ?? null,
             ];
         });

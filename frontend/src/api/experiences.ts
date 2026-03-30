@@ -32,7 +32,7 @@ export async function deleteExperience(id: number): Promise<void> {
 
 export async function updateExperience(
   id: number,
-  body: { name?: string; description?: string; course_ids?: number[] }
+  body: { name?: string; description?: string; course_ids?: number[]; created_by?: number }
 ): Promise<Experience> {
   const { data } = await client.put<Experience>(`/school/experiences/${id}`, body);
   return data;
