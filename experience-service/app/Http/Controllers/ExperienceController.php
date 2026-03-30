@@ -83,31 +83,40 @@ class ExperienceController extends Controller
         //           so we can display an accurate cohort_count on each experience card.
         // On failure: cohortCounts stays empty; each experience shows cohort_count = 0.
         //             This is acceptable degradation — the experience list is still usable.
-        $cohortCounts = collect();
+        $cohortsByExperience = collect();
         try {
             $response = Http::withToken($request->bearerToken())
                 ->timeout(5)
                 ->get(config('services.enrolment.url') . '/api/school/cohorts');
 
             if ($response->successful()) {
-                // Group the flat cohort list by experience_id and count each group.
-                $cohortCounts = collect($response->json('data', []))
-                    ->groupBy('experience_id')
-                    ->map(fn($group) => $group->count());
+                // Group the flat cohort list by experience_id, preserving full cohort details
+                // so the frontend can render individual cohort links with names and counts.
+                $cohortsByExperience = collect($response->json('data', []))
+                    ->groupBy('experience_id');
             }
         } catch (\Exception $e) {
             Log::warning('Failed to fetch cohort counts from Enrolment Service', ['error' => $e->getMessage()]);
         }
 
         // Build the response payload — one flat object per experience.
-        $data = $experiences->map(function ($experience) use ($cohortCounts) {
+        $data = $experiences->map(function ($experience) use ($cohortsByExperience) {
+            $expCohorts = $cohortsByExperience->get($experience->id, collect());
+
             return [
                 'id' => $experience->id,
                 'name' => $experience->name,
                 'description' => $experience->description,
                 'status' => $experience->status,
+                'grade' => $experience->grade,
+                'total_credits' => $experience->total_credits,
                 'course_count' => $experience->courses->count(),          // Local data — eager-loaded via ->with('courses')
-                'cohort_count' => $cohortCounts->get($experience->id, 0), // Remote data — from Enrolment Service
+                'cohort_count' => $expCohorts->count(),                   // Remote data — from Enrolment Service
+                'cohorts' => $expCohorts->map(fn($c) => [
+                    'id' => $c['id'],
+                    'name' => $c['name'],
+                    'student_count' => $c['student_count'] ?? 0,
+                ])->values()->all(),
                 'created_by' => $experience->creator?->name,              // Null-safe: creator may have been deleted
                 'created_at' => $experience->created_at?->toIso8601String(),
             ];
@@ -139,12 +148,11 @@ class ExperienceController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // Per Roles PDF: only School Teachers build experiences.
-        // School Admins can only manage enrolments (add/remove students from cohorts).
-        if (Auth::user()->role !== 'school_teacher') {
+        $role = Auth::user()->role;
+        if (!in_array($role, ['school_teacher', 'school_admin'], true)) {
             return response()->json([
                 'error' => true,
-                'message' => 'Only school teachers can create experiences',
+                'message' => 'Only school teachers and admins can create experiences',
                 'code' => 'FORBIDDEN',
             ], 403);
         }
@@ -184,6 +192,8 @@ class ExperienceController extends Controller
             'name' => $experience->name,
             'description' => $experience->description,
             'status' => $experience->status,
+            'grade' => $experience->grade,
+            'total_credits' => $experience->total_credits,
             'courses' => $courses,
             'created_at' => $experience->created_at?->toIso8601String(),
         ], 201);
@@ -259,6 +269,8 @@ class ExperienceController extends Controller
             'name' => $experience->name,
             'description' => $experience->description,
             'status' => $experience->status,
+            'grade' => $experience->grade,
+            'total_credits' => $experience->total_credits,
             'courses' => $courses,
             'cohorts' => $cohorts,
             'created_by' => $experience->creator?->name,
@@ -276,10 +288,11 @@ class ExperienceController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        if (Auth::user()->role !== 'school_teacher') {
+        $role = Auth::user()->role;
+        if (!in_array($role, ['school_teacher', 'school_admin'], true)) {
             return response()->json([
                 'error' => true,
-                'message' => 'Only school teachers can update experiences',
+                'message' => 'Only school teachers and admins can update experiences',
                 'code' => 'FORBIDDEN',
             ], 403);
         }
@@ -296,11 +309,13 @@ class ExperienceController extends Controller
 
         // 'sometimes' means the field is only validated if present in the request,
         // allowing partial updates without requiring every field to be sent.
+        // created_by allows admins to reassign the coordinator (teacher-course assignment).
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255', 'regex:/\S/'],
             'description' => 'sometimes|string|max:5000',
             'course_ids' => 'sometimes|array|min:1',
             'course_ids.*' => 'required|integer',
+            'created_by' => 'sometimes|integer|exists:users,id',
         ]);
 
         // Only validate course_ids if the client is actually changing the course list.
@@ -319,6 +334,8 @@ class ExperienceController extends Controller
             'name' => $experience->name,
             'description' => $experience->description,
             'status' => $experience->status,
+            'grade' => $experience->grade,
+            'total_credits' => $experience->total_credits,
             'created_at' => $experience->created_at?->toIso8601String(),
         ]);
     }
@@ -333,10 +350,11 @@ class ExperienceController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        if (Auth::user()->role !== 'school_teacher') {
+        $role = Auth::user()->role;
+        if (!in_array($role, ['school_teacher', 'school_admin'], true)) {
             return response()->json([
                 'error' => true,
-                'message' => 'Only school teachers can delete experiences',
+                'message' => 'Only school teachers and admins can delete experiences',
                 'code' => 'FORBIDDEN',
             ], 403);
         }

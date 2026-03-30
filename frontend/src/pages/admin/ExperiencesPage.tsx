@@ -110,7 +110,7 @@ export default function ExperiencesPage() {
           <h1 className="text-[1.65rem] font-bold text-charcoal mb-1">Experiences</h1>
           <p className="text-[0.92rem] text-soft">Programs your school has assembled from Hatchloom building blocks</p>
         </div>
-        {isTeacher && (
+        {(isTeacher || user?.role === 'school_admin') && (
           <Button onClick={openCreate}>
             <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -157,10 +157,12 @@ export default function ExperiencesPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '22%' }}>Experience</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '20%' }}>Experience</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '7%' }}>Grade</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '8%' }}>Status</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '16%' }}>Coordinator</th>
-                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '18%' }}>Contents</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '20%' }}>Contents</th>
+                  <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '7%' }}>Credits</th>
                   <th className="text-left px-5 py-3 font-[family-name:var(--font-display)] font-semibold text-[0.78rem] text-soft uppercase tracking-wider bg-bg border-b-[1.5px] border-border" style={{ width: '14%' }}>Cohorts</th>
                   <th className="text-left px-5 py-3 bg-bg border-b-[1.5px] border-border" style={{ width: '3%' }}></th>
                 </tr>
@@ -173,6 +175,9 @@ export default function ExperiencesPage() {
                       {exp.description && (
                         <div className="text-[0.8rem] text-soft mt-0.5 line-clamp-1">{exp.description}</div>
                       )}
+                    </td>
+                    <td className="px-5 py-3.5 border-b border-border">
+                      <span className="font-[family-name:var(--font-display)] font-semibold text-charcoal text-[0.92rem]">{exp.grade ?? '-'}</span>
                     </td>
                     <td className="px-5 py-3.5 border-b border-border">
                       <span className={`text-[0.78rem] font-semibold px-2.5 py-1 rounded-full inline-block ${statusPillClass(exp.status)}`}>
@@ -196,7 +201,24 @@ export default function ExperiencesPage() {
                       )}
                     </td>
                     <td className="px-5 py-3.5 border-b border-border">
-                      {(exp.cohort_count ?? 0) > 0 ? (
+                      <span className="font-[family-name:var(--font-display)] font-semibold text-charcoal text-[0.92rem]">
+                        {exp.total_credits ?? '-'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 border-b border-border">
+                      {Array.isArray(exp.cohorts) && exp.cohorts.length > 0 ? (
+                        <div className="flex flex-col gap-0.5">
+                          {exp.cohorts.map((cohort) => (
+                            <Link
+                              key={cohort.id}
+                              to={`/admin/cohorts/${cohort.id}`}
+                              className="text-[0.85rem] font-semibold text-teal no-underline hover:underline"
+                            >
+                              {cohort.name} <span className="font-normal text-soft">({cohort.student_count ?? cohort.enrolled_count ?? 0})</span>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (exp.cohort_count ?? 0) > 0 ? (
                         <Link
                           to={`/admin/experiences/${exp.id}`}
                           className="text-[0.85rem] font-semibold text-teal no-underline hover:underline"
