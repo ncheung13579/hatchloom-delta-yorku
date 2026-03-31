@@ -16,8 +16,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $authMiddleware = env('AUTH_MODE', 'http') === 'http'
+            ? \App\Http\Middleware\HttpAuthMiddleware::class
+            : \App\Http\Middleware\MockAuthMiddleware::class;
+
+        // 'auth.role' is the single alias for authentication + role enforcement.
+        // AUTH_MODE (env) controls which implementation backs it:
+        //   - 'http' (default): HttpAuthMiddleware — validates bearer tokens via Team Quebec's auth service
+        //   - 'mock':           MockAuthMiddleware — uses hardcoded token map for local dev/testing
         $middleware->alias([
-            'mock.auth' => \App\Http\Middleware\MockAuthMiddleware::class,
+            'auth.role' => $authMiddleware,
         ]);
         $middleware->appendToGroup('api', [
             \App\Http\Middleware\SecurityHeadersMiddleware::class,

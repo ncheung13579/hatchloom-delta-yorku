@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Contracts\CourseDataProviderInterface;
+use App\Http\Controllers\Traits\RequiresTeacherAdmin;
 use App\Services\ExperienceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,6 +43,8 @@ use Illuminate\Support\Facades\Log;
 
 class ExperienceController extends Controller
 {
+    use RequiresTeacherAdmin;
+
     /**
      * Dependencies are injected by Laravel's service container.
      *
@@ -83,40 +86,31 @@ class ExperienceController extends Controller
         //           so we can display an accurate cohort_count on each experience card.
         // On failure: cohortCounts stays empty; each experience shows cohort_count = 0.
         //             This is acceptable degradation — the experience list is still usable.
-        $cohortsByExperience = collect();
+        $cohortCounts = collect();
         try {
             $response = Http::withToken($request->bearerToken())
                 ->timeout(5)
                 ->get(config('services.enrolment.url') . '/api/school/cohorts');
 
             if ($response->successful()) {
-                // Group the flat cohort list by experience_id, preserving full cohort details
-                // so the frontend can render individual cohort links with names and counts.
-                $cohortsByExperience = collect($response->json('data', []))
-                    ->groupBy('experience_id');
+                // Group the flat cohort list by experience_id and count each group.
+                $cohortCounts = collect($response->json('data', []))
+                    ->groupBy('experience_id')
+                    ->map(fn($group) => $group->count());
             }
         } catch (\Exception $e) {
             Log::warning('Failed to fetch cohort counts from Enrolment Service', ['error' => $e->getMessage()]);
         }
 
         // Build the response payload — one flat object per experience.
-        $data = $experiences->map(function ($experience) use ($cohortsByExperience) {
-            $expCohorts = $cohortsByExperience->get($experience->id, collect());
-
+        $data = $experiences->map(function ($experience) use ($cohortCounts) {
             return [
                 'id' => $experience->id,
                 'name' => $experience->name,
                 'description' => $experience->description,
                 'status' => $experience->status,
-                'grade' => $experience->grade,
-                'total_credits' => $experience->total_credits,
                 'course_count' => $experience->courses->count(),          // Local data — eager-loaded via ->with('courses')
-                'cohort_count' => $expCohorts->count(),                   // Remote data — from Enrolment Service
-                'cohorts' => $expCohorts->map(fn($c) => [
-                    'id' => $c['id'],
-                    'name' => $c['name'],
-                    'student_count' => $c['student_count'] ?? 0,
-                ])->values()->all(),
+                'cohort_count' => $cohortCounts->get($experience->id, 0), // Remote data — from Enrolment Service
                 'created_by' => $experience->creator?->name,              // Null-safe: creator may have been deleted
                 'created_at' => $experience->created_at?->toIso8601String(),
             ];
@@ -148,13 +142,8 @@ class ExperienceController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $role = Auth::user()->role;
-        if (!in_array($role, ['school_teacher', 'school_admin'], true)) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Only school teachers and admins can create experiences',
-                'code' => 'FORBIDDEN',
-            ], 403);
+        if ($denied = $this->authorizeTeacherAdmin('create experiences')) {
+            return $denied;
         }
 
         // Step 1: Structural validation — Laravel handles type/format checks.
@@ -178,22 +167,13 @@ class ExperienceController extends Controller
 
         $experience = $this->experienceService->createExperience($validated);
 
-        // Batch-resolve course names from the provider in a single call.
-        $courseIds = $experience->courses->pluck('course_id')->all();
-        $courseMap = collect($this->courseDataProvider->getCoursesByIds($courseIds))->keyBy('id');
-        $courses = $experience->courses->map(fn($c) => [
-            'id' => $c->course_id,
-            'name' => $courseMap->get($c->course_id)['name'] ?? 'Unknown',
-            'sequence' => $c->sequence,
-        ]);
+        $courses = $this->resolveCourseNames($experience);
 
         return response()->json([
             'id' => $experience->id,
             'name' => $experience->name,
             'description' => $experience->description,
             'status' => $experience->status,
-            'grade' => $experience->grade,
-            'total_credits' => $experience->total_credits,
             'courses' => $courses,
             'created_at' => $experience->created_at?->toIso8601String(),
         ], 201);
@@ -230,14 +210,7 @@ class ExperienceController extends Controller
             ], 404);
         }
 
-        // Batch-resolve course names from the provider in a single call.
-        $courseIds = $experience->courses->pluck('course_id')->all();
-        $courseMap = collect($this->courseDataProvider->getCoursesByIds($courseIds))->keyBy('id');
-        $courses = $experience->courses->map(fn($c) => [
-            'id' => $c->course_id,
-            'name' => $courseMap->get($c->course_id)['name'] ?? 'Unknown',
-            'sequence' => $c->sequence,
-        ]);
+        $courses = $this->resolveCourseNames($experience);
 
         // --- Cross-service HTTP call to the Enrolment Service (port 8003) ---
         // Endpoint: GET /api/school/cohorts?experience_id={id}
@@ -258,8 +231,6 @@ class ExperienceController extends Controller
                     'name' => $c['name'],
                     'status' => $c['status'],
                     'student_count' => $c['student_count'],
-                    'start_date' => $c['start_date'] ?? null,
-                    'end_date' => $c['end_date'] ?? null,
                 ])->all();
             }
         } catch (\Exception $e) {
@@ -271,12 +242,9 @@ class ExperienceController extends Controller
             'name' => $experience->name,
             'description' => $experience->description,
             'status' => $experience->status,
-            'grade' => $experience->grade,
-            'total_credits' => $experience->total_credits,
             'courses' => $courses,
             'cohorts' => $cohorts,
             'created_by' => $experience->creator?->name,
-            'created_by_id' => $experience->created_by,
             'created_at' => $experience->created_at?->toIso8601String(),
         ]);
     }
@@ -291,13 +259,8 @@ class ExperienceController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        $role = Auth::user()->role;
-        if (!in_array($role, ['school_teacher', 'school_admin'], true)) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Only school teachers and admins can update experiences',
-                'code' => 'FORBIDDEN',
-            ], 403);
+        if ($denied = $this->authorizeTeacherAdmin('update experiences')) {
+            return $denied;
         }
 
         $experience = $this->experienceService->getExperience($id);
@@ -312,13 +275,11 @@ class ExperienceController extends Controller
 
         // 'sometimes' means the field is only validated if present in the request,
         // allowing partial updates without requiring every field to be sent.
-        // created_by allows admins to reassign the coordinator (teacher-course assignment).
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255', 'regex:/\S/'],
             'description' => 'sometimes|string|max:5000',
             'course_ids' => 'sometimes|array|min:1',
             'course_ids.*' => 'required|integer',
-            'created_by' => 'sometimes|integer|exists:users,id',
         ]);
 
         // Only validate course_ids if the client is actually changing the course list.
@@ -337,8 +298,6 @@ class ExperienceController extends Controller
             'name' => $experience->name,
             'description' => $experience->description,
             'status' => $experience->status,
-            'grade' => $experience->grade,
-            'total_credits' => $experience->total_credits,
             'created_at' => $experience->created_at?->toIso8601String(),
         ]);
     }
@@ -353,13 +312,8 @@ class ExperienceController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $role = Auth::user()->role;
-        if (!in_array($role, ['school_teacher', 'school_admin'], true)) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Only school teachers and admins can delete experiences',
-                'code' => 'FORBIDDEN',
-            ], 403);
+        if ($denied = $this->authorizeTeacherAdmin('delete experiences')) {
+            return $denied;
         }
 
         $experience = $this->experienceService->getExperience($id);
@@ -375,5 +329,24 @@ class ExperienceController extends Controller
         $this->experienceService->deleteExperience($experience);
 
         return response()->json(['message' => 'Experience archived']);
+    }
+
+    /**
+     * Batch-resolve course names from the strategy-pattern provider.
+     *
+     * Extracted from store() and show() to eliminate duplicated course ID
+     * resolution logic. Makes a single batch call to the provider rather
+     * than N individual lookups.
+     */
+    private function resolveCourseNames($experience): \Illuminate\Support\Collection
+    {
+        $courseIds = $experience->courses->pluck('course_id')->all();
+        $courseMap = collect($this->courseDataProvider->getCoursesByIds($courseIds))->keyBy('id');
+
+        return $experience->courses->map(fn($c) => [
+            'id' => $c->course_id,
+            'name' => $courseMap->get($c->course_id)['name'] ?? 'Unknown',
+            'sequence' => $c->sequence,
+        ]);
     }
 }

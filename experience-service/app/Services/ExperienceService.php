@@ -118,9 +118,6 @@ class ExperienceService
         if (isset($data['description'])) {
             $experience->description = $data['description'];
         }
-        if (isset($data['created_by'])) {
-            $experience->created_by = $data['created_by'];
-        }
         $experience->save();
 
         if (isset($data['course_ids'])) {

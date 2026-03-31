@@ -3,27 +3,30 @@
 /**
  * AppServiceProvider — Dependency injection bindings for the Dashboard Service.
  *
- * This is the central configuration point for the Dashboard Service's dependency
- * injection (DI) container. It wires together the Strategy pattern interfaces
- * with their concrete implementations and registers factory singletons.
+ * This is where the Strategy pattern is wired. Each external data dependency is
+ * defined as an interface, and this provider tells Laravel's container which
+ * concrete class to inject. Controllers and services never know which
+ * implementation they receive — they depend on the interface only.
  *
- * Why this file matters:
- *   When transitioning from mock data to real integrations, this is the ONLY
- *   file that needs to change to swap implementations. All service and controller
- *   code depends on interfaces, not concrete classes, so swapping a mock for a
- *   real implementation is a one-line change here.
+ * AUTH_MODE toggle (Strategy pattern):
+ *   The AUTH_MODE environment variable controls whether providers call real
+ *   external APIs or return hardcoded mock data. This toggle applies to:
  *
- * Current bindings (mock data):
- *   CredentialDataProviderInterface  -> MockCredentialDataProvider
- *   StudentProgressProviderInterface -> MockStudentProgressProvider
- *   LaunchPadDataProviderInterface   -> MockLaunchPadDataProvider
- *   DashboardWidgetFactory           -> singleton (stateless, reusable)
+ *   StudentProgressProviderInterface:
+ *     'http' -> HttpStudentProgressProvider  (calls Team Papa's Course Service)
+ *     'mock' -> MockStudentProgressProvider  (returns sample metrics)
  *
- * Future bindings (real integrations):
- *   CredentialDataProviderInterface  -> CredentialDataProvider (queries Karl's tables)
- *   StudentProgressProviderInterface -> StudentProgressProvider (queries Course Service + activity logs)
- *   LaunchPadDataProviderInterface   -> HttpLaunchPadDataProvider (calls Quebec's LaunchPad API)
- *   DashboardWidgetFactory           -> singleton (no change needed)
+ *   LaunchPadDataProviderInterface:
+ *     'http' -> HttpLaunchPadDataProvider    (calls Team Quebec's User Service)
+ *     'mock' -> MockLaunchPadDataProvider    (returns sample venture data)
+ *
+ * Not yet toggled (pending external team):
+ *   CredentialDataProviderInterface -> MockCredentialDataProvider (always mock)
+ *     Karl's credential engine is not yet available. When it is, add an
+ *     HttpCredentialDataProvider and wire it with the same AUTH_MODE toggle.
+ *
+ * Other bindings:
+ *   DashboardWidgetFactory -> singleton (Factory pattern, stateless)
  *
  * @see \App\Contracts\CredentialDataProviderInterface   Strategy interface for credentials
  * @see \App\Contracts\StudentProgressProviderInterface  Strategy interface for progress metrics
@@ -39,6 +42,8 @@ use App\Contracts\CredentialDataProviderInterface;
 use App\Contracts\LaunchPadDataProviderInterface;
 use App\Contracts\StudentProgressProviderInterface;
 use App\Factories\DashboardWidgetFactory;
+use App\Services\HttpLaunchPadDataProvider;
+use App\Services\HttpStudentProgressProvider;
 use App\Services\MockCredentialDataProvider;
 use App\Services\MockLaunchPadDataProvider;
 use App\Services\MockStudentProgressProvider;
@@ -65,13 +70,23 @@ class AppServiceProvider extends ServiceProvider
         // Replace with real implementation when Karl's credential engine is ready
         $this->app->bind(CredentialDataProviderInterface::class, MockCredentialDataProvider::class);
 
-        // Strategy binding: student progress metrics (mock — swap to real in AppServiceProvider)
-        // Replace with real implementation when Team Papa's Course Service is integrated
-        $this->app->bind(StudentProgressProviderInterface::class, MockStudentProgressProvider::class);
+        // Strategy binding: student progress metrics
+        // Toggle via AUTH_MODE env var: 'http' uses Papa's real API, 'mock' uses sample data
+        $this->app->bind(
+            StudentProgressProviderInterface::class,
+            env('AUTH_MODE', 'http') === 'http'
+                ? HttpStudentProgressProvider::class
+                : MockStudentProgressProvider::class
+        );
 
-        // Strategy binding: LaunchPad venture data (mock — swap to real in AppServiceProvider)
-        // Replace with real implementation when Team Quebec's LaunchPad Service is integrated
-        $this->app->bind(LaunchPadDataProviderInterface::class, MockLaunchPadDataProvider::class);
+        // Strategy binding: LaunchPad venture data
+        // Toggle via AUTH_MODE env var: 'http' uses Quebec's real API, 'mock' uses sample data
+        $this->app->bind(
+            LaunchPadDataProviderInterface::class,
+            env('AUTH_MODE', 'http') === 'http'
+                ? HttpLaunchPadDataProvider::class
+                : MockLaunchPadDataProvider::class
+        );
 
         // Widget factory: singleton because it's stateless — the WIDGET_MAP constant
         // never changes, so there's no reason to create multiple instances

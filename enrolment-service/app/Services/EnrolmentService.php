@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Contracts\CredentialDataProviderInterface;
+use App\Enums\CohortStatus;
 use App\Events\StudentEnrolled;
 use App\Events\StudentRemoved;
 use App\Models\Cohort;
@@ -114,10 +115,9 @@ class EnrolmentService
             $query->whereIn('id', $studentIds);
         }
 
-        // Filter by cohort_id — find students who are currently enrolled in that specific cohort.
+        // Filter by cohort_id — find students who have an enrolment in that specific cohort.
         if (isset($filters['cohort_id'])) {
             $studentIds = CohortEnrolment::where('cohort_id', $filters['cohort_id'])
-                ->where('status', 'enrolled')
                 ->pluck('student_id')
                 ->unique();
 
@@ -135,19 +135,30 @@ class EnrolmentService
             $query->whereIn('id', $filters['student_ids']);
         }
 
-        if (isset($filters['grade'])) {
-            $query->where('grade', $filters['grade']);
-        }
+        // Grade filtering will be available when the users table includes a grade column.
+        // Grade filtering is accepted but not yet applied (awaiting users table migration).
 
         $students = $query->paginate($perPage);
 
-        // Batch-load all enrolments for students on this page in a single query,
+        // Batch-load enrolments for students on this page in a single query,
         // avoiding the N+1 pattern of querying enrolments per student individually.
+        // When filtered by experience_id or cohort_id, scope the enrolments to match
+        // so that the response only includes assignments relevant to the filter context.
         $studentIds = $students->getCollection()->pluck('id');
-        $allEnrolments = CohortEnrolment::whereIn('student_id', $studentIds)
-            ->with(['cohort.experience'])
-            ->get()
-            ->groupBy('student_id');
+        $enrolmentQuery = CohortEnrolment::whereIn('student_id', $studentIds)
+            ->with(['cohort.experience']);
+
+        if (isset($filters['experience_id'])) {
+            $enrolmentQuery->whereHas('cohort', function ($q) use ($filters) {
+                $q->where('experience_id', $filters['experience_id']);
+            });
+        }
+
+        if (isset($filters['cohort_id'])) {
+            $enrolmentQuery->where('cohort_id', $filters['cohort_id']);
+        }
+
+        $allEnrolments = $enrolmentQuery->get()->groupBy('student_id');
 
         $students->getCollection()->transform(function (User $student) use ($allEnrolments) {
             return $this->transformStudentWithAssignments($student, $allEnrolments->get($student->id, collect()));
@@ -178,7 +189,6 @@ class EnrolmentService
             'student_id' => $student->id,
             'name' => $student->name,
             'email' => $student->email,
-            'grade' => $student->grade,
             'cohort_assignments' => $assignments,
             'assignment_status' => $this->determineAssignmentStatus($enrolments),
         ];
@@ -193,7 +203,7 @@ class EnrolmentService
     private function determineAssignmentStatus(\Illuminate\Support\Collection $enrolments): string
     {
         $hasActiveEnrolment = $enrolments->contains(function (CohortEnrolment $e) {
-            return $e->status === 'enrolled' && $e->cohort && $e->cohort->status === 'active';
+            return $e->status === 'enrolled' && $e->cohort && $e->cohort->status === CohortStatus::ACTIVE->value;
         });
 
         if ($hasActiveEnrolment) {
@@ -319,7 +329,7 @@ class EnrolmentService
 
         // Students with at least one enrolled status in an ACTIVE cohort specifically
         $activeStudentIds = CohortEnrolment::whereHas('cohort', function ($q) use ($schoolId) {
-            $q->where('school_id', $schoolId)->where('status', 'active');
+            $q->where('school_id', $schoolId)->where('status', CohortStatus::ACTIVE->value);
         })->where('status', 'enrolled')
             ->pluck('student_id')
             ->unique();
@@ -362,7 +372,7 @@ class EnrolmentService
         }
 
         $cohorts = Cohort::where('school_id', $schoolId)
-            ->where('status', 'active')
+            ->where('status', CohortStatus::ACTIVE->value)
             ->withCount(['activeEnrolments'])
             ->get();
 
@@ -393,13 +403,27 @@ class EnrolmentService
      * cohort's school_id, since CohortEnrolment itself does not have a
      * school_id column.
      */
-    public function exportEnrolmentList(): array
+    public function exportEnrolmentList(array $filters = []): array
     {
         $schoolId = Auth::user()->school_id;
 
-        $enrolments = CohortEnrolment::whereHas('cohort', function ($q) use ($schoolId) {
+        $query = CohortEnrolment::whereHas('cohort', function ($q) use ($schoolId) {
             $q->where('school_id', $schoolId);
-        })->with(['student', 'cohort.experience'])->get();
+        })->with(['student', 'cohort.experience']);
+
+        // Filter by specific cohort
+        if (isset($filters['cohort_id'])) {
+            $query->where('cohort_id', $filters['cohort_id']);
+        }
+
+        // Filter by experience (all cohorts belonging to that experience)
+        if (isset($filters['experience_id'])) {
+            $query->whereHas('cohort', function ($q) use ($filters) {
+                $q->where('experience_id', $filters['experience_id']);
+            });
+        }
+
+        $enrolments = $query->get();
 
         $rows = [];
         foreach ($enrolments as $enrolment) {

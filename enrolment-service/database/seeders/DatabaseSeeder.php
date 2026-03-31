@@ -24,8 +24,8 @@ class DatabaseSeeder extends Seeder
         DB::table('users')->insertOrIgnore([
             [
                 'id' => 1,
-                'name' => 'Ms. Patel',
-                'email' => 'patel@ridgewood.edu',
+                'name' => 'Admin User',
+                'email' => 'admin@ridgewood.edu',
                 'password' => Hash::make('password'),
                 'role' => 'school_admin',
                 'school_id' => 1,
@@ -54,27 +54,16 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
-        $students = [
-            ['id' => 4,  'name' => 'Aiden Carter',      'email' => 'acarter@ridgewood.edu',     'grade' => 10],
-            ['id' => 5,  'name' => 'Priya Sharma',      'email' => 'psharma@ridgewood.edu',     'grade' => 10],
-            ['id' => 6,  'name' => 'Marcus Chen',       'email' => 'mchen@ridgewood.edu',       'grade' => 11],
-            ['id' => 7,  'name' => 'Sophia Rodriguez',  'email' => 'srodriguez@ridgewood.edu',  'grade' => 11],
-            ['id' => 8,  'name' => 'Ethan Whitfield',   'email' => 'ewhitfield@ridgewood.edu',  'grade' => 9],
-            ['id' => 9,  'name' => 'Zara Okafor',       'email' => 'zokafor@ridgewood.edu',     'grade' => 9],
-            ['id' => 10, 'name' => 'Liam Petersen',     'email' => 'lpetersen@ridgewood.edu',   'grade' => 12],
-            ['id' => 11, 'name' => 'Mia Takahashi',     'email' => 'mtakahashi@ridgewood.edu',  'grade' => 12],
-            ['id' => 12, 'name' => 'Noah Bergstrom',    'email' => 'nbergstrom@ridgewood.edu',  'grade' => 8],
-            ['id' => 13, 'name' => 'Chloe Washington',  'email' => 'cwashington@ridgewood.edu', 'grade' => 8],
-        ];
-        foreach ($students as $s) {
+        $grades = [10, 10, 11, 11, 9, 9, 12, 12, 8, 8];
+        for ($i = 1; $i <= 10; $i++) {
             DB::table('users')->insertOrIgnore([
-                'id' => $s['id'],
-                'name' => $s['name'],
-                'email' => $s['email'],
+                'id' => $i + 3,
+                'name' => "Student $i",
+                'email' => "student{$i}@ridgewood.edu",
                 'password' => Hash::make('password'),
                 'role' => 'student',
                 'school_id' => 1,
-                'grade' => $s['grade'],
+                'grade' => $grades[$i - 1],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -83,8 +72,8 @@ class DatabaseSeeder extends Seeder
         // Parent user — linked to students via parent_student_links (many-to-many)
         DB::table('users')->insertOrIgnore([
             'id' => 14,
-            'name' => 'David Carter',
-            'email' => 'dcarter@ridgewood.edu',
+            'name' => 'Parent of Student 1',
+            'email' => 'parent1@ridgewood.edu',
             'password' => Hash::make('password'),
             'role' => 'parent',
             'school_id' => 1,
@@ -128,8 +117,6 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Business Foundations',
                 'description' => 'Introduction to business concepts',
                 'status' => 'active',
-                'grade' => 10,
-                'total_credits' => 12,
                 'created_by' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -140,8 +127,6 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Tech Explorers',
                 'description' => 'Technology exploration',
                 'status' => 'active',
-                'grade' => 11,
-                'total_credits' => 8,
                 'created_by' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -152,8 +137,6 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Creative Problem Solving',
                 'description' => 'Design thinking and collaborative problem-solving workshops',
                 'status' => 'draft',
-                'grade' => 9,
-                'total_credits' => 10,
                 'created_by' => 3,
                 'created_at' => now(),
                 'updated_at' => now(),
