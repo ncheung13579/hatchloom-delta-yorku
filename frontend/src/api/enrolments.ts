@@ -73,8 +73,9 @@ export async function getEnrolmentStatistics(): Promise<EnrolmentStatistics> {
   return data;
 }
 
-export async function exportEnrolments(): Promise<Blob> {
+export async function exportEnrolments(params?: { cohort_id?: number; experience_id?: number }): Promise<Blob> {
   const response = await client.get('/school/enrolments/export', {
+    params,
     responseType: 'blob',
   });
   return response.data;

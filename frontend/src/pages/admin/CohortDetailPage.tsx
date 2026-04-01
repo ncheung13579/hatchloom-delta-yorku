@@ -332,7 +332,7 @@ export default function CohortDetailPage() {
             <button
               onClick={async () => {
                 try {
-                  const blob = await exportEnrolments();
+                  const blob = await exportEnrolments({ cohort_id: Number(id) });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
