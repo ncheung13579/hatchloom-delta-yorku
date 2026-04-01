@@ -1,3 +1,4 @@
+// Layout shell for the student and parent portal views (top nav + centered content).
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 

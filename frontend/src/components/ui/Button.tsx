@@ -1,3 +1,4 @@
+// Reusable button with variant (primary, secondary, danger, ghost) and size options.
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';

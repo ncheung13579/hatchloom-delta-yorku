@@ -1,3 +1,6 @@
+// Experience detail page — shows a single experience with its statistics, course contents,
+// cohort list, and enrolled students. Supports editing the experience, creating cohorts,
+// deleting the experience, and exporting student data as CSV.
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -20,6 +23,7 @@ import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import { useAuth } from '../../context/AuthContext';
 
+// Returns Tailwind classes for enrolled/removed enrolment status badges.
 function enrolmentBadgeClass(status: string): string {
   switch (status) {
     case 'enrolled': return 'bg-success/10 text-[#16A34A]';
@@ -38,22 +42,26 @@ export default function ExperienceDetailPage() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Student search with debounce
   const [studentPage, setStudentPage] = useState(1);
   const [studentSearch, setStudentSearch] = useState('');
   const [debouncedStudentSearch, setDebouncedStudentSearch] = useState('');
   const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
+  // Create-cohort modal form state
   const [showCreateCohort, setShowCreateCohort] = useState(false);
   const [cohortName, setCohortName] = useState('');
   const [cohortStart, setCohortStart] = useState('');
   const [cohortEnd, setCohortEnd] = useState('');
   const [cohortCapacity, setCohortCapacity] = useState('');
 
+  // Edit-experience modal form state
   const [showEditExp, setShowEditExp] = useState(false);
   const [editExpName, setEditExpName] = useState('');
   const [editExpDesc, setEditExpDesc] = useState('');
   const [editCoordinator, setEditCoordinator] = useState<number | ''>('');
 
+  // Create a new cohort under this experience with name, date range, and optional capacity.
   const createCohortMut = useMutation({
     mutationFn: () => createCohort({
       experience_id: experienceId,
@@ -72,6 +80,7 @@ export default function ExperienceDetailPage() {
     },
   });
 
+  // Update the experience name, description, and optionally the coordinator.
   const updateExpMut = useMutation({
     mutationFn: () => updateExperience(experienceId, {
       name: editExpName,
@@ -84,6 +93,7 @@ export default function ExperienceDetailPage() {
     },
   });
 
+  // Permanently delete this experience, then redirect to the experiences list.
   const deleteExpMut = useMutation({
     mutationFn: () => deleteExperience(experienceId),
     onSuccess: () => {
@@ -94,6 +104,7 @@ export default function ExperienceDetailPage() {
 
   const perPage = 15;
 
+  // Debounce student search: waits 400ms after the last keystroke before firing the query.
   const handleStudentSearch = (value: string) => {
     setStudentSearch(value);
     if (searchTimer) clearTimeout(searchTimer);
@@ -128,6 +139,7 @@ export default function ExperienceDetailPage() {
     enabled: !isNaN(experienceId),
   });
 
+  // Download enrolled students as a CSV file via a temporary blob URL.
   const handleExport = async () => {
     try {
       const blob = await exportExperienceStudents(experienceId);
@@ -154,6 +166,7 @@ export default function ExperienceDetailPage() {
     );
   }
 
+  // Unpack statistics sub-objects for the metric cards
   const stats = statistics as Record<string, unknown> | undefined;
   const enrolmentStats = stats?.enrolment as Record<string, unknown> | undefined;
   const completionStats = stats?.completion as Record<string, unknown> | undefined;
@@ -166,7 +179,8 @@ export default function ExperienceDetailPage() {
   const rawStudents = (studentsData as { data?: Array<Record<string, unknown>>; meta?: { current_page: number; last_page: number; total: number; per_page: number } })?.data ?? [];
   const studentsMeta = (studentsData as { meta?: { current_page: number; last_page: number; total: number; per_page: number } })?.meta;
 
-  // Group rows by student_id so a student in multiple cohorts appears once
+  // Deduplicate rows by student_id: a student enrolled in multiple cohorts
+  // appears once with all their cohort_names merged into a single array.
   const students = Object.values(
     rawStudents.reduce<Record<number, Record<string, unknown>>>((acc, row) => {
       const sid = row.student_id as number;

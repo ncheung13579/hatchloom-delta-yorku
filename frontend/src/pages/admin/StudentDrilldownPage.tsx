@@ -1,3 +1,7 @@
+// Admin student drilldown screen (screen 303).
+// Shows a single student's full profile: progress metrics, course completion,
+// cohort assignments, LaunchPad ventures, credentials, and curriculum mapping.
+
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getStudentDrilldown } from '../../api/dashboard';
@@ -6,6 +10,7 @@ import MetricCard from '../../components/ui/MetricCard';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 
+// Renders a horizontal bar with percentage label, clamped to 0-100%.
 function ProgressBar({ value, max = 100 }: { value: number; max?: number }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
@@ -39,12 +44,14 @@ export default function StudentDrilldownPage() {
     return <EmptyState title="Failed to load student data" description="The student may not exist or you may not have permission to view their data." />;
   }
 
+  // Destructure the loosely-typed drilldown response into typed sections.
   const student = (drilldown as Record<string, unknown>).student as Record<string, unknown> | undefined;
   const progress = (drilldown as Record<string, unknown>).progress as Record<string, unknown> | undefined;
   const credentials = (drilldown as Record<string, unknown>).credentials as Array<Record<string, unknown>> | undefined;
   const curriculum = (drilldown as Record<string, unknown>).curriculum_mapping as Record<string, unknown> | undefined;
   const ventures = (drilldown as Record<string, unknown>).ventures as Record<string, unknown> | undefined;
 
+  // Enrolment detail may nest cohort_assignments at the top level or under .data.
   const enrolmentStudent = enrolmentDetail as Record<string, unknown> | undefined;
   const enrolmentData = enrolmentStudent?.data as Record<string, unknown> | undefined;
   const cohortAssignments = ((enrolmentStudent?.cohort_assignments ?? enrolmentData?.cohort_assignments ?? []) as Array<Record<string, unknown>>);

@@ -1,3 +1,5 @@
+// Authentication context and provider. Uses mock token-to-user mapping for demo
+// purposes. Persists session to localStorage so refreshes don't force re-login.
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User } from '../types';
 
@@ -13,6 +15,8 @@ interface AuthState {
   isStudent: boolean;
 }
 
+// Mock auth: maps hard-coded demo tokens to user profiles. In production this
+// would be replaced by a real /auth/me endpoint that validates the JWT.
 const TOKEN_USER_MAP: Record<string, User> = {
   'test-admin-token': {
     id: 1,
@@ -52,9 +56,12 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  // Initialize token from localStorage so sessions survive page refresh
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('hatchloom_token'));
   const [loading, setLoading] = useState(true);
 
+  // On mount (or token change), restore user from localStorage first;
+  // fall back to TOKEN_USER_MAP lookup if localStorage is empty or corrupt.
   useEffect(() => {
     if (!token) {
       setLoading(false);
@@ -101,10 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     login,
     logout,
-    isAdmin: user?.role === 'school_admin',
-    isTeacher: user?.role === 'school_teacher',
-    isParent: user?.role === 'parent',
-    isStudent: user?.role === 'student',
+    isAdmin: user?.role === 'school_admin',     // full access: dashboard, experiences, enrolments
+    isTeacher: user?.role === 'school_teacher', // no dashboard; can manage experiences & cohorts
+    isParent: user?.role === 'parent',          // read-only view of linked children's progress
+    isStudent: user?.role === 'student',        // read-only view of own progress
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

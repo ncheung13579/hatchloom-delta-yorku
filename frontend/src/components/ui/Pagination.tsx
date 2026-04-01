@@ -1,3 +1,4 @@
+// Previous/Next pagination bar with "Showing X-Y of Z" summary.
 import Button from './Button';
 
 interface PaginationProps {
@@ -11,6 +12,8 @@ interface PaginationProps {
 export default function Pagination({ currentPage, lastPage, onPageChange, total, perPage }: PaginationProps) {
   if (lastPage <= 1) return null;
 
+  // Calculate the 1-based range of items visible on the current page.
+  // start: first item index; end: last item index, capped at total.
   const start = (currentPage - 1) * (perPage || 15) + 1;
   const end = Math.min(currentPage * (perPage || 15), total || 0);
 

@@ -1,6 +1,9 @@
+// Main admin layout: top navigation bar, collapsible sidebar, and routed content area.
+// Used by school_admin and school_teacher roles. Sidebar items are filtered by role.
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+// Primary sidebar navigation entries (Dashboard, Experiences, Enrolment, etc.).
 const navItems = [
   {
     to: '/admin/dashboard',
@@ -174,6 +177,7 @@ export default function AdminLayout() {
           </div>
 
           <nav>
+            {/* Dashboard is admin-only; all other nav items are visible to both roles. */}
             {navItems
               .filter((item) => item.to !== '/admin/dashboard' || user.role === 'school_admin')
               .map((item) => (

@@ -1,9 +1,14 @@
+// Admin reporting/curriculum-alignment screen (screen 304).
+// Displays Alberta PoS curriculum coverage per program area and per student,
+// plus engagement metrics (login frequency, session length, completion rate).
+
 import { useQuery } from '@tanstack/react-query';
 import { getPosCoverage, getEngagement } from '../../api/dashboard';
 import MetricCard from '../../components/ui/MetricCard';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 
+// Labeled progress bar with percentage, clamped to 0-100%.
 function ProgressBar({ value, label }: { value: number; label: string }) {
   const pct = Math.min(100, Math.round(value));
   return (
@@ -30,6 +35,7 @@ export default function ReportingPage() {
 
   if (loadingPos && loadingEng) return <Spinner className="py-24" />;
 
+  // Cast loosely-typed API payloads; extract sub-objects for PoS and engagement.
   const pos = posData as Record<string, unknown> | undefined;
   const eng = engData as Record<string, unknown> | undefined;
 

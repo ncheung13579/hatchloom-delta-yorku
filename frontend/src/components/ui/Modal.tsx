@@ -1,3 +1,4 @@
+// Overlay modal dialog with backdrop, title bar, and close button.
 import { useEffect, type ReactNode } from 'react';
 
 interface ModalProps {
@@ -9,6 +10,7 @@ interface ModalProps {
 }
 
 export default function Modal({ open, onClose, title, children, wide = false }: ModalProps) {
+  // Lock body scroll while the modal is open; restore on close or unmount.
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';

@@ -1,3 +1,6 @@
+// Stub page for screens not yet implemented (Curriculum 305, Credentials 306, Settings).
+// Renders a "Not Available in This Demo" message based on the current route.
+
 import { useLocation } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 

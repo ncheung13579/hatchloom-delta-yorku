@@ -1,3 +1,4 @@
+// Dashboard stat card displaying a label, value, and optional detail line with a colored left accent.
 interface MetricCardProps {
   label: string;
   value: string | number;
@@ -5,6 +6,7 @@ interface MetricCardProps {
   accent?: 'teal' | 'primary' | 'warning' | 'success' | 'danger' | 'orange';
 }
 
+// Maps accent prop to the corresponding Tailwind left-border color class.
 const accentColors: Record<string, string> = {
   teal: 'border-l-teal',
   primary: 'border-l-primary',

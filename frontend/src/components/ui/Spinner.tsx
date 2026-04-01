@@ -1,3 +1,4 @@
+// Animated loading spinner used as a full-page or inline loading indicator.
 export default function Spinner({ className = '' }: { className?: string }) {
   return (
     <div className={`flex items-center justify-center ${className}`}>

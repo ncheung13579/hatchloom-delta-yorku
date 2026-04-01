@@ -1,3 +1,4 @@
+// Styled text input with optional label and error message.
 import type { InputHTMLAttributes } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {

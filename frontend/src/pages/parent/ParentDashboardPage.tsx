@@ -1,3 +1,7 @@
+// Parent dashboard screen.
+// Shows summary cards for each child linked to the logged-in parent,
+// with progress, course count, and credential stats per child.
+
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -5,9 +9,11 @@ import { getStudentDrilldown } from '../../api/dashboard';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 
-// Parent (id=14) is linked to student ids 4 and 5 via parent_student_links
+// Hardcoded to match the seeded parent-child links in the database:
+// parent user (id=14) is linked to student ids 4 and 5 via the parent_student_links table.
 const LINKED_CHILDREN = [4, 5];
 
+// Fetches and renders a single child's summary (name, progress, credentials).
 function ChildCard({ studentId }: { studentId: number }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['student-drilldown', studentId],

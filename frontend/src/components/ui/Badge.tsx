@@ -1,3 +1,4 @@
+// Colored pill badge for displaying status, tags, and labels.
 import type { ReactNode } from 'react';
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'muted';

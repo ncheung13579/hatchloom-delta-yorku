@@ -1,3 +1,5 @@
+// Experiences list page — displays all experiences in a searchable, paginated table.
+// Provides create and delete modals for school_admin and school_teacher roles.
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -12,6 +14,7 @@ import Pagination from '../../components/ui/Pagination';
 import type { Experience } from '../../types';
 import { AxiosError } from 'axios';
 
+// Returns Tailwind classes for the colored status pill badge.
 function statusPillClass(status: string): string {
   switch (status) {
     case 'active': return 'bg-success/10 text-[#16A34A]';
@@ -29,10 +32,13 @@ export default function ExperiencesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  // Modal visibility and delete-target state
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Experience | null>(null);
   const perPage = 15;
 
+  // Debounce search input: waits 400ms after the last keystroke before updating
+  // debouncedSearch, which triggers the API query and resets to page 1.
   const [timer, setTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -49,12 +55,14 @@ export default function ExperiencesPage() {
     queryFn: () => getExperiences(page, perPage, debouncedSearch),
   });
 
+  // Courses are only fetched when the create modal opens (enabled: showCreate).
   const { data: coursesData } = useQuery({
     queryKey: ['courses'],
     queryFn: () => getCourses(),
     enabled: showCreate,
   });
 
+  // Create a new experience with a name, description, and selected course IDs.
   const createMutation = useMutation({
     mutationFn: createExperience,
     onSuccess: () => {
@@ -63,6 +71,7 @@ export default function ExperiencesPage() {
     },
   });
 
+  // Permanently delete an experience by ID.
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteExperience(id),
     onSuccess: () => {
@@ -71,6 +80,7 @@ export default function ExperiencesPage() {
     },
   });
 
+  // Create-experience form state
   const [formName, setFormName] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formCourseIds, setFormCourseIds] = useState<number[]>([]);
@@ -91,6 +101,7 @@ export default function ExperiencesPage() {
     setShowCreate(true);
   };
 
+  // Toggle a course in/out of the selected list for the create form.
   const toggleCourse = (courseId: number) => {
     setFormCourseIds((prev) =>
       prev.includes(courseId) ? prev.filter((id) => id !== courseId) : [...prev, courseId]

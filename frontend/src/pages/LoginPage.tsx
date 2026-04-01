@@ -1,3 +1,7 @@
+// Login / role-selector screen.
+// Provides one-click demo login buttons for each role (admin, teacher, student, parent).
+// Each button sets a hardcoded session token and redirects to the role's landing page.
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -6,6 +10,8 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Demo convenience: sets the session token and navigates in one click.
+  // Tokens are mapped to seeded mock users on the backend.
   function quickLogin(token: string, path: string) {
     login(token);
     navigate(path);

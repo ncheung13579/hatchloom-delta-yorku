@@ -1,3 +1,7 @@
+// Parent child-detail screen.
+// Shows a single child's full profile from the parent's perspective:
+// progress metrics, course completion, cohort assignments, and credentials.
+
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getStudentDrilldown } from '../../api/dashboard';
@@ -6,6 +10,7 @@ import MetricCard from '../../components/ui/MetricCard';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 
+// Renders a horizontal bar with percentage label, clamped to 0-100%.
 function ProgressBar({ value }: { value: number }) {
   const pct = Math.min(100, Math.round(value));
   return (
@@ -39,11 +44,13 @@ export default function ChildDetailPage() {
     return <EmptyState title="Access denied" description="You may not have permission to view this student's data." />;
   }
 
+  // Destructure the loosely-typed drilldown response into typed sections.
   const student = (drilldown as Record<string, unknown>).student as Record<string, unknown>;
   const progress = (drilldown as Record<string, unknown>).progress as Record<string, unknown> | undefined;
   const credentials = ((drilldown as Record<string, unknown>).credentials ?? []) as Array<Record<string, unknown>>;
   const courses = (progress as Record<string, unknown>)?.courses as Array<Record<string, unknown>> | undefined;
 
+  // Enrolment detail may nest cohort_assignments at the top level or under .data.
   const enrolmentStudent = enrolmentDetail as Record<string, unknown> | undefined;
   const enrolmentData = enrolmentStudent?.data as Record<string, unknown> | undefined;
   const cohortAssignments = ((enrolmentStudent?.cohort_assignments ?? enrolmentData?.cohort_assignments ?? []) as Array<Record<string, unknown>>);

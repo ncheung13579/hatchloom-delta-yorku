@@ -1,3 +1,8 @@
+// Shared TypeScript interfaces for the Hatchloom Delta frontend.
+// These mirror the JSON shapes returned by the backend API.
+
+// --- Auth & shared types ---
+
 export interface User {
   id: number;
   name: string;
@@ -7,11 +12,14 @@ export interface User {
   school_name?: string;
 }
 
+// Standard error envelope returned by the API on 4xx/5xx responses
 export interface ApiError {
   error: true;
   message: string;
   code: string;
 }
+
+// --- Pagination ---
 
 export interface PaginationMeta {
   current_page: number;
@@ -25,6 +33,8 @@ export interface PaginatedResponse<T> {
   meta: PaginationMeta;
 }
 
+// --- Experience types ---
+
 export interface Experience {
   id: number;
   name: string;
@@ -33,7 +43,7 @@ export interface Experience {
   school_id: number;
   grade?: number;
   total_credits?: number;
-  created_by: number | string;
+  created_by: number | string; // number from API, string when displaying name
   created_by_id?: number;
   courses?: ExperienceCourse[];
   cohorts?: Cohort[];
@@ -43,6 +53,7 @@ export interface Experience {
   updated_at: string;
 }
 
+// Join between an experience and a course, with ordering
 export interface ExperienceCourse {
   id: number;
   course_id: number;
@@ -50,12 +61,14 @@ export interface ExperienceCourse {
   sequence: number;
 }
 
+// --- Enrolment types ---
+
 export interface Cohort {
   id: number;
   name: string;
   experience_id: number;
   experience_name?: string;
-  status: 'not_started' | 'active' | 'completed';
+  status: 'not_started' | 'active' | 'completed'; // lifecycle: not_started -> active -> completed
   start_date: string;
   end_date: string;
   capacity?: number;
@@ -80,6 +93,8 @@ export interface CohortEnrolment {
   removed_at?: string;
 }
 
+// --- Course types ---
+
 export interface Course {
   id: number;
   name: string;
@@ -87,13 +102,16 @@ export interface Course {
   blocks?: Block[];
 }
 
+// A single content block within a course (e.g. video, quiz, reading)
 export interface Block {
   id: number;
   course_id: number;
   title: string;
-  type: string;
+  type: string; // block card type (e.g. 'video', 'quiz', 'discussion')
   sequence: number;
 }
+
+// --- Dashboard types ---
 
 export interface DashboardData {
   school: { id: number; name: string };
@@ -118,6 +136,8 @@ export interface DashboardData {
   };
   warnings: Array<{ type: string; message: string; severity: string }>;
 }
+
+// --- Enrolment statistics ---
 
 export interface EnrolmentStatistics {
   total_students: number;

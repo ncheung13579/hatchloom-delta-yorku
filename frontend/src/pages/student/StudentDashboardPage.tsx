@@ -1,3 +1,7 @@
+// Student self-service dashboard.
+// Shows the logged-in student's own progress, courses, cohort assignments,
+// and earned credentials. Data comes from the drilldown + enrolment APIs.
+
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { getStudentDrilldown } from '../../api/dashboard';
@@ -6,6 +10,7 @@ import MetricCard from '../../components/ui/MetricCard';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 
+// Renders a horizontal bar with percentage label, clamped to 0-100%.
 function ProgressBar({ value }: { value: number }) {
   const pct = Math.min(100, Math.round(value));
   return (
@@ -39,12 +44,14 @@ export default function StudentDashboardPage() {
     return <EmptyState title="Unable to load your data" description="Please try again later." />;
   }
 
+  // Destructure the loosely-typed drilldown response into typed sections.
   const dd = drilldown as Record<string, unknown>;
   const student = dd.student as Record<string, unknown>;
   const progress = dd.progress as Record<string, unknown> | undefined;
   const credentials = (dd.credentials ?? []) as Array<Record<string, unknown>>;
   const courses = (progress as Record<string, unknown>)?.courses as Array<Record<string, unknown>> | undefined;
 
+  // Enrolment detail may nest cohort_assignments at the top level or under .data.
   const enrolmentStudent = enrolmentDetail as Record<string, unknown> | undefined;
   const enrolmentData = enrolmentStudent?.data as Record<string, unknown> | undefined;
   const cohortAssignments = ((enrolmentStudent?.cohort_assignments ?? enrolmentData?.cohort_assignments ?? []) as Array<Record<string, unknown>>);

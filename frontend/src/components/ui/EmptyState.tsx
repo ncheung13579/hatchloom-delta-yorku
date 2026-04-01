@@ -1,3 +1,4 @@
+// Centered placeholder shown when a list or table has no data.
 import type { ReactNode } from 'react';
 
 export default function EmptyState({

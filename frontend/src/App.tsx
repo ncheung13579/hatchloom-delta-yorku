@@ -1,3 +1,7 @@
+// Root application component. Defines three route groups:
+//   /admin/*   — school_admin and school_teacher (AdminLayout)
+//   /parent/*  — parent portal (PortalLayout)
+//   /student/* — student portal (PortalLayout)
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -24,6 +28,8 @@ const queryClient = new QueryClient({
   },
 });
 
+// Redirects unauthenticated users to /login. If `roles` is provided, also
+// checks that the user's role is in the allowed list.
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -32,18 +38,21 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?
   return <>{children}</>;
 }
 
+// Restricts a route to school_admin only; teachers are sent to /admin/experiences.
 function AdminOnly({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   if (user?.role !== 'school_admin') return <Navigate to="/admin/experiences" replace />;
   return <>{children}</>;
 }
 
+// Landing redirect: admins go to dashboard, teachers go to experiences.
 function AdminIndex() {
   const { user } = useAuth();
   if (user?.role === 'school_admin') return <Navigate to="dashboard" replace />;
   return <Navigate to="experiences" replace />;
 }
 
+// Wraps /login — if already authenticated, redirects to the user's home page.
 function GuestRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;

@@ -1,3 +1,4 @@
+// Composable table primitives (Table, Thead, Tbody, Th, Td) with consistent styling.
 import type { ReactNode, ThHTMLAttributes, TdHTMLAttributes } from 'react';
 
 export function Table({ children, className = '' }: { children: ReactNode; className?: string }) {

@@ -1,3 +1,6 @@
+// Enrolments page — shows all students and their cohort assignments in a filterable,
+// paginated table. Supports filtering by grade, experience, and cohort, plus CSV export
+// and soft-removal of a student from a cohort.
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -13,6 +16,7 @@ import Pagination from '../../components/ui/Pagination';
 export default function EnrolmentsPage() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  // If a ?student_id= query param is present, pre-filter to that student.
   const initialStudentId = searchParams.get('student_id')
     ? Number(searchParams.get('student_id'))
     : undefined;
@@ -20,6 +24,7 @@ export default function EnrolmentsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  // Filter dropdowns and remove-student modal target
   const [gradeFilter, setGradeFilter] = useState('');
   const [experienceFilter, setExperienceFilter] = useState('');
   const [cohortFilter, setCohortFilter] = useState('');
@@ -30,6 +35,8 @@ export default function EnrolmentsPage() {
   } | null>(null);
   const perPage = 15;
 
+  // Debounce search input: waits 400ms after the last keystroke before updating
+  // debouncedSearch, which triggers the API query and resets to page 1.
   const [timer, setTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -41,6 +48,7 @@ export default function EnrolmentsPage() {
     setTimer(t);
   };
 
+  // Assemble query params from all active filters for the enrolments API call.
   const buildParams = () => {
     const params: Record<string, unknown> = { page, per_page: perPage };
     if (debouncedSearch) params.search = debouncedSearch;
@@ -71,6 +79,7 @@ export default function EnrolmentsPage() {
     queryFn: () => getCohorts(),
   });
 
+  // Soft-remove a student from a specific cohort (student can be re-added later).
   const removeMutation = useMutation({
     mutationFn: ({ cohort_id, student_id }: { cohort_id: number; student_id: number }) =>
       removeStudent(cohort_id, student_id),
@@ -81,6 +90,7 @@ export default function EnrolmentsPage() {
     },
   });
 
+  // Download all enrolments as a CSV file via a temporary blob URL.
   const handleExport = async () => {
     try {
       const blob = await exportEnrolments();
@@ -99,7 +109,8 @@ export default function EnrolmentsPage() {
   const meta = enrolmentsData?.meta;
   const gradeOptions = ['7', '8', '9', '10', '11', '12'];
 
-  // Keep students grouped (one row per student with cohort pills) — matches reference screen 303
+  // Normalize each student row: flatten nested cohort_assignments into a typed structure.
+  // Each student gets one table row with cohort pills — matches reference screen 303.
   const students = (enrolmentsRaw as Array<Record<string, unknown>>).map((student) => ({
     student_id: student.student_id as number,
     student_name: (student.name as string) ?? '-',

@@ -1,3 +1,4 @@
+// Generic container card with rounded border and subtle shadow.
 import type { ReactNode, HTMLAttributes } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {

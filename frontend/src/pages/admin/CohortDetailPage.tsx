@@ -1,3 +1,7 @@
+// Admin cohort detail screen (part of screen 302).
+// Displays a single cohort's metadata, enrolled students, progress metrics,
+// and course contents. Supports enrol/remove/edit/activate/complete actions.
+
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +13,7 @@ import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 
+// Maps cohort status to Tailwind color classes for the status pill badge.
 function statusPillClass(status: string): string {
   switch (status) {
     case 'active': return 'bg-success/10 text-[#16A34A]';
@@ -126,11 +131,12 @@ export default function CohortDetailPage() {
     );
   }
 
+  // Cast loosely-typed API responses to generic record arrays for field access.
   const enrolments = (enrolmentsData?.data ?? []) as Array<Record<string, unknown>>;
 
   const contents = ((contentsData as Record<string, unknown>)?.courses ?? []) as Array<Record<string, unknown>>;
 
-  // Enrolment data has: student_id, name, email, cohort_assignments[]
+  // Filter enrolled students by name or email; resets to page 0 on search change.
   const filtered = enrolments.filter(e => {
     if (!search) return true;
     const name = ((e.name as string) ?? (e.student_name as string) ?? '').toLowerCase();
@@ -138,10 +144,12 @@ export default function CohortDetailPage() {
     return name.includes(search.toLowerCase()) || email.includes(search.toLowerCase());
   });
 
+  // Client-side pagination: 8 students per page.
   const totalStudents = filtered.length;
   const totalPages = Math.ceil(totalStudents / perPage);
   const paged = filtered.slice(page * perPage, (page + 1) * perPage);
 
+  // Convert snake_case status (e.g. "not_started") to title case for display.
   const statusLabel = cohort.status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   return (
@@ -405,6 +413,7 @@ export default function CohortDetailPage() {
                             : 'bg-[#F59E0B] shadow-[0_0_0_3px_rgba(245,158,11,0.15)]'
                         }`} />
                       </td>
+                      {/* Relative date: "Today", "Yesterday", "N days ago", or short date for 7+ days */}
                       <td className="px-5 py-3.5 border-b border-border text-soft text-[0.85rem]">
                         {enrolledAt ? (() => {
                           const date = new Date(enrolledAt);

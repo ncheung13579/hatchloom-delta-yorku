@@ -1,3 +1,6 @@
+// Admin dashboard — the main landing screen after login.
+// Displays summary metrics, warning banners, a tabbed students/cohorts table,
+// and a student engagement widget sourced from the widgets API.
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
@@ -5,10 +8,13 @@ import { getDashboard, getWidgets, getWidget } from '../../api/dashboard';
 import MetricCard from '../../components/ui/MetricCard';
 import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
+
+// Formats a snake_case status string into Title Case for display.
 function statusLabel(status: string): string {
   return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Returns Tailwind classes for the colored status pill badge.
 function statusPillClass(status: string): string {
   switch (status) {
     case 'active': return 'bg-success/10 text-[#16A34A]';
@@ -18,6 +24,7 @@ function statusPillClass(status: string): string {
   }
 }
 
+// Converts an ISO date string to a human-readable relative label (e.g. "2 days ago").
 function relativeDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
@@ -40,6 +47,7 @@ function relativeDate(dateStr: string | null | undefined): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// Maps backend student statuses to user-friendly labels (e.g. "active" -> "On track").
 function studentStatusLabel(status: string): string {
   switch (status) {
     case 'active':
@@ -50,6 +58,7 @@ function studentStatusLabel(status: string): string {
   }
 }
 
+// Returns Tailwind classes for the colored status indicator dot next to student names.
 function studentStatusDotClass(status: string): string {
   switch (status) {
     case 'active':
@@ -59,6 +68,7 @@ function studentStatusDotClass(status: string): string {
   }
 }
 
+// Renders a color-coded pill for engagement level (excellent/good/moderate/low).
 function EngagementBadge({ level }: { level: string }) {
   const cls = level === 'excellent' ? 'bg-success/10 text-[#16A34A]'
     : level === 'good' ? 'bg-teal/10 text-teal'
@@ -96,6 +106,7 @@ export default function DashboardPage() {
   }
 
   const { summary, students, warnings } = data;
+  // Normalize cohorts — the API may return either an array or a { data: [...] } wrapper.
   const cohorts = Array.isArray(data.cohorts) ? data.cohorts : (data.cohorts as Record<string, unknown>)?.data as typeof data.cohorts ?? [];
 
   return (
@@ -193,6 +204,7 @@ export default function DashboardPage() {
         <div className="h-px bg-border" />
 
         {/* Students tab — summary + student table from widgets API */}
+        {/* Extract student rows from the student_table widget and apply client-side search filtering */}
         {activeTab === 'students' && (() => {
           const widgetsList = ((widgetsResponse as Record<string, unknown>)?.widgets ?? []) as Array<Record<string, unknown>>;
           const studentTableWidget = widgetsList.find(w => w.type === 'student_table');
@@ -343,7 +355,8 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Engagement widget — uses getWidgets() + getWidget('engagement_chart') */}
+      {/* Engagement widget — unpacks student_metrics, school_averages, and distribution
+           from the engagement_chart widget to render a per-student engagement table */}
       {(() => {
         const engWidget = engagementWidget as Record<string, unknown> | undefined;
         const engData = engWidget?.data as Record<string, unknown> | undefined;
