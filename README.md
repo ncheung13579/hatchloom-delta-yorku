@@ -214,7 +214,7 @@ Open http://localhost:3000. When using `AUTH_MODE=mock`, you will see role butto
 | Button | Role | User | What They See |
 |--------|------|------|---------------|
 | **School Admin** | `school_admin` | Admin User (id=1) | Dashboard, Experiences, Enrolments — **unrestricted**: all read and write operations including create/edit/archive experiences, manage cohorts, enrol/remove students |
-| **Teacher** | `school_teacher` | Ms. Smith (id=2) | Experiences, Enrolments — **read-only access**. No dashboard overview or reporting. All write operations (create/edit/archive, manage cohorts, enrol/remove) are admin-only. |
+| **Teacher** | `school_teacher` | Ms. Smith (id=2) | Experiences, Enrolments — can **create/edit/archive experiences** and **manage cohorts** (create, update, activate, complete). Cannot enrol/remove students (admin-only). No dashboard overview or reporting. |
 | **Student** | `student` | Student 1 (id=4) | Personal dashboard with own enrolments, progress, and credentials. Read-only. |
 | **Parent** | `parent` | Parent User (id=14) | Dashboard showing linked children's data only (children: student ids 4 and 5). Cannot see other students. |
 
@@ -365,16 +365,16 @@ All provider interfaces are bound in the service container. Services declare dep
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
 | GET | `/api/school/experiences` | All roles | List experiences (Screen 301) |
-| POST | `/api/school/experiences` | **Teacher only** | Create experience |
+| POST | `/api/school/experiences` | Admin/Teacher | Create experience |
 | GET | `/api/school/experiences/{id}` | All roles | Experience detail |
-| PUT | `/api/school/experiences/{id}` | **Teacher only** | Update experience |
-| DELETE | `/api/school/experiences/{id}` | **Teacher only** | Archive experience |
-| GET | `/api/school/experiences/{id}/students` | Admin/Teacher | Student list for experience (paginated) |
-| GET | `/api/school/experiences/{id}/students/{studentId}` | Admin/Teacher | Student detail within experience |
+| PUT | `/api/school/experiences/{id}` | Admin/Teacher | Update experience |
+| DELETE | `/api/school/experiences/{id}` | Admin/Teacher | Archive experience |
+| GET | `/api/school/experiences/{id}/students` | All roles (scoped) | Student list for experience (paginated) |
+| GET | `/api/school/experiences/{id}/students/{studentId}` | All roles (scoped) | Student detail within experience |
 | GET | `/api/school/experiences/{id}/students/export` | Admin/Teacher | CSV export of students |
 | GET | `/api/school/experiences/{id}/contents` | All roles | Course blocks and contents |
 | GET | `/api/school/experiences/{id}/statistics` | Admin/Teacher | Enrolment/completion stats |
-| GET | `/api/school/courses` | All roles | Course catalogue (from provider) |
+| GET | `/api/school/courses` | Admin/Teacher | Course catalogue (from provider) |
 | GET | `/api/school/experiences/health` | Public | Health check |
 
 ### Enrolment Service (Port 8003)
@@ -382,13 +382,13 @@ All provider interfaces are bound in the service container. Services declare dep
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
 | GET | `/api/school/cohorts` | All roles | List cohorts (filterable by experience_id, status) |
-| POST | `/api/school/cohorts` | **Teacher only** | Create cohort |
+| POST | `/api/school/cohorts` | Admin/Teacher | Create cohort |
 | GET | `/api/school/cohorts/{id}` | All roles | Cohort detail |
-| PUT | `/api/school/cohorts/{id}` | **Teacher only** | Update cohort |
-| PATCH | `/api/school/cohorts/{id}/activate` | **Teacher only** | Activate cohort (State pattern) |
-| PATCH | `/api/school/cohorts/{id}/complete` | **Teacher only** | Complete cohort (State pattern) |
-| POST | `/api/school/cohorts/{id}/enrolments` | Admin/Teacher | Enrol student in cohort |
-| DELETE | `/api/school/cohorts/{id}/enrolments/{studentId}` | Admin/Teacher | Remove student (soft-delete) |
+| PUT | `/api/school/cohorts/{id}` | Admin/Teacher | Update cohort |
+| PATCH | `/api/school/cohorts/{id}/activate` | Admin/Teacher | Activate cohort (State pattern) |
+| PATCH | `/api/school/cohorts/{id}/complete` | Admin/Teacher | Complete cohort (State pattern) |
+| POST | `/api/school/cohorts/{id}/enrolments` | Admin only | Enrol student in cohort |
+| DELETE | `/api/school/cohorts/{id}/enrolments/{studentId}` | Admin only | Remove student (soft-delete) |
 | GET | `/api/school/enrolments` | All roles | Paginated student overview |
 | GET | `/api/school/enrolments/statistics` | Admin/Teacher | Aggregate stats + warnings |
 | GET | `/api/school/enrolments/export` | Admin/Teacher | CSV export |
