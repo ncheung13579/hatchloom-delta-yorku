@@ -32,13 +32,26 @@ function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?
   return <>{children}</>;
 }
 
+function AdminOnly({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (user?.role !== 'school_admin') return <Navigate to="/admin/experiences" replace />;
+  return <>{children}</>;
+}
+
+function AdminIndex() {
+  const { user } = useAuth();
+  if (user?.role === 'school_admin') return <Navigate to="dashboard" replace />;
+  return <Navigate to="experiences" replace />;
+}
+
 function GuestRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) {
     if (user.role === 'parent') return <Navigate to="/parent" replace />;
     if (user.role === 'student') return <Navigate to="/student" replace />;
-    return <Navigate to="/admin/dashboard" replace />;
+    if (user.role === 'school_admin') return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/admin/experiences" replace />;
   }
   return <>{children}</>;
 }
@@ -60,8 +73,8 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
+              <Route index element={<AdminIndex />} />
+              <Route path="dashboard" element={<AdminOnly><DashboardPage /></AdminOnly>} />
               <Route path="experiences" element={<ExperiencesPage />} />
               <Route path="experiences/:id" element={<ExperienceDetailPage />} />
               <Route path="enrolments" element={<EnrolmentsPage />} />

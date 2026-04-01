@@ -213,8 +213,8 @@ Open http://localhost:3000. When using `AUTH_MODE=mock`, you will see role butto
 
 | Button | Role | User | What They See |
 |--------|------|------|---------------|
-| **School Admin** | `school_admin` | Admin User (id=1) | Dashboard, Experiences, Enrolments -- **read-only** for experience/cohort content, can manage student enrolments |
-| **Teacher** | `school_teacher` | Ms. Smith (id=2) | Same screens -- **full write access**: create/edit experiences, create/edit/activate/complete cohorts, enrol/remove students |
+| **School Admin** | `school_admin` | Admin User (id=1) | Dashboard, Experiences, Enrolments — **unrestricted**: all read and write operations including create/edit/archive experiences, manage cohorts, enrol/remove students |
+| **Teacher** | `school_teacher` | Ms. Smith (id=2) | Experiences, Enrolments — **read-only access**. No dashboard overview or reporting. All write operations (create/edit/archive, manage cohorts, enrol/remove) are admin-only. |
 | **Student** | `student` | Student 1 (id=4) | Personal dashboard with own enrolments, progress, and credentials. Read-only. |
 | **Parent** | `parent` | Parent User (id=14) | Dashboard showing linked children's data only (children: student ids 4 and 5). Cannot see other students. |
 

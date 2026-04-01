@@ -33,7 +33,7 @@ export default function LoginPage() {
                 <Button variant="secondary" onClick={() => quickLogin('test-admin-token', '/admin/dashboard')} className="w-full">
                   School Admin
                 </Button>
-                <Button variant="secondary" onClick={() => quickLogin('test-teacher-token', '/admin/dashboard')} className="w-full">
+                <Button variant="secondary" onClick={() => quickLogin('test-teacher-token', '/admin/experiences')} className="w-full">
                   Teacher
                 </Button>
               </div>
@@ -58,7 +58,7 @@ export default function LoginPage() {
             <p className="text-xs text-soft text-center">
               Demo mode — tokens are mapped to mock users in the backend.
               <br />
-              Admin and Teacher access screens 300-303. Students and Parents have read-only access to their own data.
+              Admin has full access to screens 300-303. Teachers have read-only access to experiences and enrolments. Students and Parents see their own data only.
             </p>
           </div>
         </div>

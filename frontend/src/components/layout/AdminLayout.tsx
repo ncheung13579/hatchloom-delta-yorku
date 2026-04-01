@@ -93,7 +93,7 @@ function TopNav({ user, logout }: { user: { name: string; email?: string; role?:
   return (
     <nav className="sticky top-0 z-50 h-[58px] bg-card border-b-[1.5px] border-border flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        <a href="/admin/dashboard" className="font-[family-name:var(--font-display)] font-extrabold text-[1.35rem] text-charcoal tracking-tight no-underline">
+        <a href="/admin" className="font-[family-name:var(--font-display)] font-extrabold text-[1.35rem] text-charcoal tracking-tight no-underline">
           hatch<span className="text-primary">loom</span>
         </a>
         <div className="bg-gradient-to-br from-[#EEF2FF] to-[#E0E7FF] text-[#4338CA] text-[0.78rem] font-semibold px-3 py-1 rounded-full tracking-wide">
@@ -174,9 +174,11 @@ export default function AdminLayout() {
           </div>
 
           <nav>
-            {navItems.map((item) => (
-              <SidebarLink key={item.to} {...item} />
-            ))}
+            {navItems
+              .filter((item) => item.to !== '/admin/dashboard' || user.role === 'school_admin')
+              .map((item) => (
+                <SidebarLink key={item.to} {...item} />
+              ))}
           </nav>
 
           <div className="flex-1 min-h-6" />
