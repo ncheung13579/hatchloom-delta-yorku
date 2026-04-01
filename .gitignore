@@ -57,6 +57,14 @@ legends reference documents/
 # Temporary debug scripts
 debug_403.php
 
+# Integration test scripts (not for submission)
+integration_test*.php
+verify_test_cases.sh
+
+# Working/temp directories
+docs/
+temp/
+
 # Internal changelog (not for external distribution)
 CHANGELOG.md
 

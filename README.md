@@ -531,18 +531,6 @@ php artisan test
 
 Repeat for `enrolment-service` and `dashboard-service`. The `.env.testing` files are pre-configured with test database credentials (`hatchloom_test`).
 
-### Integration Tests
-
-A PHP integration test script runs against all three services via HTTP, validating endpoints, role-based access, CRUD operations, error handling, and seeded data integrity:
-
-```bash
-# With Docker
-docker compose exec dashboard-service php integration_test.php
-
-# Locally (services must be running)
-php integration_test.php
-```
-
 Tests are also run automatically via GitHub Actions on push to `main` and on pull requests.
 
 ---
