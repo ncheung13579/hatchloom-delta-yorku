@@ -1,8 +1,10 @@
-# Hatchloom Team Delta — School Administration Module
+# Hatchloom Team Delta — School Administration Backend
 
-Three Laravel microservices and a React frontend powering the School Administration module (Screens 300–303) of the Hatchloom digital learning platform. Built for CSSD 2211 (Cloud Computing) and CSSD 2203 (Software Design).
+Three Laravel microservices powering the School Administration backend (Screens 300–303) of the Hatchloom digital learning platform. Built for CSSD 2211 (Cloud Computing) and CSSD 2203 (Software Design).
 
-Hatchloom is a learning and community platform for teens aged 12–17, built across four York University student teams. Team Delta owns the screens that school administrators and teachers use to manage experiences, cohorts, enrolments, and view dashboards.
+Hatchloom is a learning and community platform for teens aged 12–17, built across four York University student teams. Team Delta owns the backend APIs that school administrators and teachers use to manage experiences, cohorts, enrolments, and view dashboards.
+
+> **Note on the React frontend:** The frontend included in this repository is **not part of the workpack deliverable**. It was built as a test harness to validate the backend APIs and demonstrate the screens during development. Team Delta's scope is the backend services only.
 
 ---
 
@@ -36,7 +38,7 @@ To reset the database: `docker compose down -v && docker compose up --build -d`
 
 ```
                     +---------------------------------+
-                    |      React Frontend (Vite)      |
+                    |    React Frontend (test UI)     |
                     |          (port 3000)            |
                     +-----+--------+--------+---------+
                           |        |        |
@@ -61,10 +63,10 @@ To reset the database: `docker compose down -v && docker compose up --build -d`
 
 | Service | Port | Owns Tables | Role |
 |---------|------|-------------|------|
-| Frontend | 3000 | — | React SPA with Vite, Tailwind CSS, TanStack Query |
 | Dashboard | 8001 | None (aggregation only) | Calls the other two services over HTTP, merges results. Returns partial responses with `service_degraded` warnings if a downstream service is down. |
 | Experience | 8002 | `experiences`, `experience_courses` | Experience CRUD, course assignments, student lists, CSV export |
 | Enrolment | 8003 | `cohorts`, `cohort_enrolments` | Cohort lifecycle, student enrolment/removal, statistics, CSV export |
+| Frontend | 3000 | — | Test UI (not part of deliverable). React SPA with Vite, Tailwind CSS, TanStack Query. |
 
 All three backend services share one PostgreSQL database. The `schools`, `users`, and `parent_student_links` tables are shared reference data.
 
@@ -90,27 +92,11 @@ School-wide enrolment overview with grade/experience/cohort filters, metric card
 
 ---
 
-## Login & Roles
+## Login
 
-Open http://localhost:3000. Four role buttons are shown on the login page:
+Open http://localhost:3000 and click **School Admin** to log in. This uses a mock admin token (`test-admin-token`) mapped to a seeded admin user with full access to all screens and actions.
 
-| Button | Role | Lands On | Access |
-|--------|------|----------|--------|
-| **School Admin** | `school_admin` | Dashboard | Full access to all screens and actions |
-| **Teacher** | `school_teacher` | Experiences | Can create/edit experiences, manage cohorts (create, activate, complete). Cannot enrol/remove students (admin-only). No dashboard overview. |
-| **Student** | `student` | Student view | Read-only personal dashboard with own enrolments and progress |
-| **Parent** | `parent` | Parent view | Read-only view of linked children's data (backend-enforced) |
-
-The authentication mode is set via the `AUTH_MODE` environment variable. The demo uses `AUTH_MODE=mock` with static bearer tokens. Setting `AUTH_MODE=http` switches to real JWT validation via Team Quebec's User Service — no code changes required.
-
-### Mock Tokens (for API testing)
-
-| Token | User | Role |
-|-------|------|------|
-| `test-admin-token` | Admin User (id=1) | school_admin |
-| `test-teacher-token` | Ms. Smith (id=2) | school_teacher |
-| `test-student-token` | Student 1 (id=4) | student |
-| `test-parent-token` | Parent User (id=14) | parent |
+The authentication mode is set via the `AUTH_MODE` environment variable. The demo uses `AUTH_MODE=mock` with a static bearer token. Setting `AUTH_MODE=http` switches to real JWT validation via Team Quebec's User Service — no code changes required.
 
 ```bash
 curl.exe -4 -H "Authorization: Bearer test-admin-token" http://localhost:8001/api/school/dashboard
@@ -120,28 +106,15 @@ curl.exe -4 -H "Authorization: Bearer test-admin-token" http://localhost:8001/ap
 
 ## Demo Walkthrough
 
-### Teacher Flow (content management — primary demo)
-
-1. Log in as **Teacher** → lands on Experiences (Screen 301)
-2. **Create Experience**: click "Create Experience", fill in name/description, select courses from Team Papa's catalogue, submit
-3. **Experience Detail** (Screen 302): click an experience → view metric cards, course contents, cohorts
-4. **Create Cohort**: click "Create Cohort", fill in name/dates/capacity
-5. **Cohort lifecycle**: click a cohort → "Activate Cohort" (not_started → active), then "Complete Cohort" (active → completed). Buttons disappear after each transition — completed is terminal. *(This demonstrates the State pattern.)*
-6. **Student Drill-Down**: click a student row → progress, credentials, curriculum mapping
-7. **Enrolment** (Screen 303): view school-wide enrolments, filter, export CSV
-
-### Admin Flow (full access)
-
 1. Log in as **School Admin** → lands on Dashboard (Screen 300)
 2. **Dashboard**: view 6 KPI cards, warning banner for unassigned students, Students/Cohorts tabs, Engagement widget
 3. Click a student row → **Student Drill-Down**: progress metrics, course progress bars, LaunchPad ventures, credentials, Alberta PoS curriculum mapping
-4. **Enrol Student**: navigate to an active cohort, click "Enrol Student", enter a student ID, submit. Student appears immediately. *(Admin-only action.)*
-5. Navigate to **Enrolment** (Screen 303): filter by grade/experience/cohort, view metric cards, export CSV
-
-### Student & Parent Flows
-
-- **Student**: personal dashboard showing own enrolments, progress, and credentials. Read-only.
-- **Parent**: sees linked children's data only. Backend verifies the parent-child link — cannot access other students.
+4. Navigate to **Experiences** (Screen 301): search experiences, click "Create Experience" — fill in name/description, select courses from Team Papa's catalogue, submit
+5. **Experience Detail** (Screen 302): click an experience → view metric cards, course contents, cohorts
+6. **Create Cohort**: click "Create Cohort", fill in name/dates/capacity
+7. **Cohort lifecycle**: click a cohort → "Activate Cohort" (not_started → active), then "Complete Cohort" (active → completed). Buttons disappear after each transition — completed is terminal. *(This demonstrates the State pattern.)*
+8. **Enrol Student**: on an active cohort, click "Enrol Student", enter a student ID, submit. Student appears immediately.
+9. Navigate to **Enrolment** (Screen 303): filter by grade/experience/cohort, view metric cards, export CSV
 
 ---
 
@@ -192,7 +165,7 @@ All provider interfaces are bound in the service container. Services declare dep
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
 | GET | `/api/school/dashboard` | Admin only | Full dashboard overview with KPIs |
-| GET | `/api/school/dashboard/students/{id}` | All roles (scoped) | Student drill-down |
+| GET | `/api/school/dashboard/students/{id}` | Admin/Teacher | Student drill-down |
 | GET | `/api/school/dashboard/widgets` | Admin only | All dashboard widgets |
 | GET | `/api/school/dashboard/widgets/{type}` | Admin only | Single widget |
 | GET | `/api/school/dashboard/reporting/pos-coverage` | Admin only | Curriculum coverage |
@@ -203,15 +176,15 @@ All provider interfaces are bound in the service container. Services declare dep
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| GET | `/api/school/experiences` | All roles | List experiences |
+| GET | `/api/school/experiences` | Admin/Teacher | List experiences |
 | POST | `/api/school/experiences` | Admin/Teacher | Create experience |
-| GET | `/api/school/experiences/{id}` | All roles | Experience detail |
+| GET | `/api/school/experiences/{id}` | Admin/Teacher | Experience detail |
 | PUT | `/api/school/experiences/{id}` | Admin/Teacher | Update experience |
 | DELETE | `/api/school/experiences/{id}` | Admin/Teacher | Archive experience |
-| GET | `/api/school/experiences/{id}/students` | All roles (scoped) | Student list |
-| GET | `/api/school/experiences/{id}/students/{studentId}` | All roles (scoped) | Student detail |
+| GET | `/api/school/experiences/{id}/students` | Admin/Teacher | Student list |
+| GET | `/api/school/experiences/{id}/students/{studentId}` | Admin/Teacher | Student detail |
 | GET | `/api/school/experiences/{id}/students/export` | Admin/Teacher | CSV export |
-| GET | `/api/school/experiences/{id}/contents` | All roles | Course blocks |
+| GET | `/api/school/experiences/{id}/contents` | Admin/Teacher | Course blocks |
 | GET | `/api/school/experiences/{id}/statistics` | Admin/Teacher | Stats |
 | GET | `/api/school/courses` | Admin/Teacher | Course catalogue |
 | GET | `/api/school/experiences/health` | Public | Health check |
@@ -220,18 +193,18 @@ All provider interfaces are bound in the service container. Services declare dep
 
 | Method | Endpoint | Auth | Purpose |
 |--------|----------|------|---------|
-| GET | `/api/school/cohorts` | All roles | List cohorts |
+| GET | `/api/school/cohorts` | Admin/Teacher | List cohorts |
 | POST | `/api/school/cohorts` | Admin/Teacher | Create cohort |
-| GET | `/api/school/cohorts/{id}` | All roles | Cohort detail |
+| GET | `/api/school/cohorts/{id}` | Admin/Teacher | Cohort detail |
 | PUT | `/api/school/cohorts/{id}` | Admin/Teacher | Update cohort |
 | PATCH | `/api/school/cohorts/{id}/activate` | Admin/Teacher | Activate cohort |
 | PATCH | `/api/school/cohorts/{id}/complete` | Admin/Teacher | Complete cohort |
 | POST | `/api/school/cohorts/{id}/enrolments` | Admin only | Enrol student |
 | DELETE | `/api/school/cohorts/{id}/enrolments/{studentId}` | Admin only | Remove student (soft-delete) |
-| GET | `/api/school/enrolments` | All roles | Enrolment overview |
+| GET | `/api/school/enrolments` | Admin/Teacher | Enrolment overview |
 | GET | `/api/school/enrolments/statistics` | Admin/Teacher | Aggregate stats |
 | GET | `/api/school/enrolments/export` | Admin/Teacher | CSV export |
-| GET | `/api/school/enrolments/students/{id}` | All roles (scoped) | Student detail |
+| GET | `/api/school/enrolments/students/{id}` | Admin/Teacher | Student detail |
 | GET | `/api/school/enrolments/health` | Public | Health check |
 
 ---

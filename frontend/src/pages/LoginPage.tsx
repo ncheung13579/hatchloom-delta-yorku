@@ -33,38 +33,14 @@ export default function LoginPage() {
           </p>
 
           <div className="space-y-4">
-            <div>
-              <div className="text-[0.72rem] font-bold text-soft uppercase tracking-wider mb-2">School Staff</div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="secondary" onClick={() => quickLogin('test-admin-token', '/admin/dashboard')} className="w-full">
-                  School Admin
-                </Button>
-                <Button variant="secondary" onClick={() => quickLogin('test-teacher-token', '/admin/experiences')} className="w-full">
-                  Teacher
-                </Button>
-              </div>
-            </div>
-
-            <div className="h-px bg-border" />
-
-            <div>
-              <div className="text-[0.72rem] font-bold text-soft uppercase tracking-wider mb-2">Students &amp; Parents</div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="secondary" onClick={() => quickLogin('test-student-token', '/student')} className="w-full">
-                  Student
-                </Button>
-                <Button variant="secondary" onClick={() => quickLogin('test-parent-token', '/parent')} className="w-full">
-                  Parent
-                </Button>
-              </div>
-            </div>
+            <Button variant="secondary" onClick={() => quickLogin('test-admin-token', '/admin/dashboard')} className="w-full">
+              School Admin
+            </Button>
           </div>
 
           <div className="mt-6 pt-6 border-t border-border">
             <p className="text-xs text-soft text-center">
-              Demo mode — tokens are mapped to mock users in the backend.
-              <br />
-              Admin has full access to screens 300-303. Teachers have read-only access to experiences and enrolments. Students and Parents see their own data only.
+              Demo mode — token is mapped to a mock admin user in the backend.
             </p>
           </div>
         </div>
