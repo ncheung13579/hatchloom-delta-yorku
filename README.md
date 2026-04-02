@@ -285,6 +285,8 @@ Key variables (all configurable in `docker-compose.yml`):
 | `AUTH_MODE` | `mock` | `mock` for static tokens, `http` for real JWT via Quebec |
 | `DB_HOST` | `postgres` | Database host (Docker service name) |
 | `DB_DATABASE` | `hatchloom` | Database name |
+| `DB_USERNAME` | `hatchloom` | Database user |
+| `DB_PASSWORD` | `secret` | Database password |
 | `USER_SERVICE_URL` | `http://localhost:8080` | Quebec User Service (JWT validation, when AUTH_MODE=http) |
 | `COURSE_SERVICE_URL` | `http://localhost:8004` | Papa Course Service (when AUTH_MODE=http) |
 | `CREDENTIAL_SERVICE_URL` | `http://localhost:8005` | Karl's Credential Engine (when AUTH_MODE=http) |
