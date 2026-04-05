@@ -17,7 +17,7 @@ TOTAL=0
 
 # ── helpers ──────────────────────────────────────────────────────
 pass() { PASS=$((PASS+1)); TOTAL=$((TOTAL+1)); echo "  PASS: $1"; }
-fail() { FAIL=$((FAIL+1)); TOTAL=$((TOTAL+1)); echo "  FAIL: $1"; [ -n "${2:-}" ] && echo "        $2"; }
+fail() { FAIL=$((FAIL+1)); TOTAL=$((TOTAL+1)); echo "  FAIL: $1"; if [ -n "${2:-}" ]; then echo "        $2"; fi; }
 
 check_status() {
   local label="$1" expected="$2" actual="$3" body="${4:-}"
@@ -61,9 +61,9 @@ check_json_field "Dashboard has students counts" "$DASH" '"total_enrolled"'
 check_json_field "Dashboard has warnings" "$DASH" '"warnings"'
 check_json_field "Dashboard has cohort counts" "$DASH" '"active"'
 
-section "1.2 Teacher fetches dashboard"
-TDASH=$(curl -s "$BASE/api/school/dashboard" -H "Authorization: Bearer $TEACHER")
-check_json_field "Teacher dashboard returns school" "$TDASH" '"name":"Ridgewood Academy"'
+section "1.2 Teacher blocked from admin dashboard"
+TDASH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/school/dashboard" -H "Authorization: Bearer $TEACHER")
+check_status "Teacher gets 403 on admin dashboard" "403" "$TDASH_CODE"
 
 section "1.3 Dashboard widgets API"
 WIDGETS=$(curl -s "$BASE/api/school/dashboard/widgets" -H "Authorization: Bearer $ADMIN")
@@ -256,19 +256,19 @@ ENROL_PAGE=$(curl -s "$BASE/api/school/enrolments?page=1&per_page=5" -H "Authori
 ENROL_PAGE_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/school/enrolments?page=1&per_page=5" -H "Authorization: Bearer $ADMIN")
 check_status "Paginated enrolments" "200" "$ENROL_PAGE_CODE"
 
-section "5.4 Enrol student 5 in new cohort"
+section "5.4 Enrol student 5 in new cohort (admin-only)"
 if [ -n "${NEW_COH_ID:-}" ]; then
   ENROL_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/school/cohorts/$NEW_COH_ID/enrolments" \
-    -H "Authorization: Bearer $TEACHER" \
+    -H "Authorization: Bearer $ADMIN" \
     -H "Content-Type: application/json" \
     -d '{"student_id":5}')
   check_status "Enrol student 5" "201" "$ENROL_CODE"
 fi
 
-section "5.5 Enrol student 6 in new cohort"
+section "5.5 Enrol student 6 in new cohort (admin-only)"
 if [ -n "${NEW_COH_ID:-}" ]; then
   ENROL2_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/school/cohorts/$NEW_COH_ID/enrolments" \
-    -H "Authorization: Bearer $TEACHER" \
+    -H "Authorization: Bearer $ADMIN" \
     -H "Content-Type: application/json" \
     -d '{"student_id":6}')
   check_status "Enrol student 6" "201" "$ENROL2_CODE"
@@ -284,7 +284,7 @@ fi
 section "5.7 Duplicate enrolment rejected"
 if [ -n "${NEW_COH_ID:-}" ]; then
   DUP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/school/cohorts/$NEW_COH_ID/enrolments" \
-    -H "Authorization: Bearer $TEACHER" \
+    -H "Authorization: Bearer $ADMIN" \
     -H "Content-Type: application/json" \
     -d '{"student_id":5}')
   if [ "$DUP_CODE" != "201" ]; then
@@ -294,10 +294,10 @@ if [ -n "${NEW_COH_ID:-}" ]; then
   fi
 fi
 
-section "5.8 Remove student from cohort"
+section "5.8 Remove student from cohort (admin-only)"
 if [ -n "${NEW_COH_ID:-}" ]; then
   REMOVE_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE/api/school/cohorts/$NEW_COH_ID/enrolments/6" \
-    -H "Authorization: Bearer $TEACHER")
+    -H "Authorization: Bearer $ADMIN")
   check_status "Remove student 6 from cohort" "200" "$REMOVE_CODE"
 fi
 
@@ -464,7 +464,7 @@ fi
 
 section "9.6 Enrol non-existent student"
 BAD_ENROL_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/school/cohorts/1/enrolments" \
-  -H "Authorization: Bearer $TEACHER" \
+  -H "Authorization: Bearer $ADMIN" \
   -H "Content-Type: application/json" \
   -d '{"student_id":99999}')
 if [ "$BAD_ENROL_CODE" != "201" ]; then
